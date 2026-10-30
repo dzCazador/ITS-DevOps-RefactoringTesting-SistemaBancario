@@ -1,12 +1,12 @@
-from pathlib import Path
 from typing import List, Optional, Tuple
 
 from passlib.context import CryptContext
-from sqlalchemy import create_engine, delete, event, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
 from src.cliente import Cliente
+from src.database import DatabaseConnection
 from src.models import (
     Base,
     ClienteModel,
@@ -23,21 +23,18 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class DAO:
-    """Data Access Object para la persistencia bancaria con SQLAlchemy y SQLite."""
+    """Data Access Object para la persistencia bancaria con SQLAlchemy y SQLite.
+
+    La conexión (``Engine``) se obtiene del Singleton
+    :class:`src.database.DatabaseConnection`, por lo que todos los DAO
+    creados con el mismo ``db_path`` comparten la misma conexión física.
+    """
 
     def __init__(self, db_path: str = "sistema_bancario.db"):
         self.db_path = db_path
-        url = "sqlite://" if db_path == ":memory:" else f"sqlite:///{Path(db_path).resolve()}"
-        self.engine = create_engine(url, future=True)
-        event.listen(self.engine, "connect", self._enable_foreign_keys)
+        self.engine = DatabaseConnection.instance(db_path).engine
         self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.create_tables()
-
-    @staticmethod
-    def _enable_foreign_keys(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
 
     def connect(self):
         return self.session_factory()
@@ -292,9 +289,9 @@ class DAO:
                 session.execute(delete(model))
 
     def cerrar_conexion(self):
-        self.engine.dispose()
+        DatabaseConnection.reset()
 
     def __del__(self):
-        engine = getattr(self, "engine", None)
-        if engine:
-            engine.dispose()
+        # La conexión la administra el Singleton DatabaseConnection;
+        # el DAO no la cierra individualmente.
+        pass

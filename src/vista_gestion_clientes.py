@@ -8,16 +8,12 @@ sys.path.insert(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
-from src.dao import DAO
+from src.app_context import dao
 from src.gestion_clientes import (
     alta_cliente,
     alta_cuenta,
     editar_cliente,
 )
-
-
-# Base de datos del proyecto
-dao = DAO("sistema_bancario.db")
 
 
 def main(page: ft.Page):

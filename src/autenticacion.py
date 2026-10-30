@@ -2,8 +2,9 @@ from sqlalchemy import select
 
 from src.cliente import Cliente
 from src.cuenta import Cuenta
+from src.cuenta_factory import CuentaFactory
 from src.dao import DAO
-from src.models import EmpleadoModel
+from src.models import EmpleadoModel, TipoCuentaModel
 
 
 class Autenticacion:
@@ -47,7 +48,20 @@ class Autenticacion:
         id_cliente, nombre, apellido, dni, _ = datos_cliente
         cliente = Cliente(nombre, apellido, dni)
         filas = self.dao.obtener_cuentas_por_cliente(id_cliente)
-        return [Cuenta.from_db_row(fila, cliente) for fila in filas]
+        nombres_tipo = self._nombres_tipo_cuenta()
+        return [
+            CuentaFactory.crear_desde_fila(
+                fila, cliente, nombres_tipo.get(fila[3], "")
+            )
+            for fila in filas
+        ]
+
+    def _nombres_tipo_cuenta(self) -> dict[int, str]:
+        with self.dao.connect() as session:
+            return {
+                row.id_tipo_cuenta: row.nombre
+                for row in session.scalars(select(TipoCuentaModel)).all()
+            }
 
     def _es_personal(self, id_persona: int) -> bool:
         with self.dao.connect() as session:

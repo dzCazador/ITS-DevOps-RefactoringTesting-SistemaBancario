@@ -6,12 +6,11 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.dao_cliente import DAOCliente
+from src.app_context import dao_cliente as _dao
 from src.navegacion import crear_bottom_nav, nombre_cuenta_para_header
 from src.sesion import Sesion
-
-# Temporal hasta BE-10/11 de Daniel (ver src/dao_cliente.py).
-_dao = DAOCliente("sistema_bancario.db")
+from src.ui_utils import formatear_monto as _formatear_monto
+from src.ui_utils import mostrar_notificacion as _mostrar_notificacion
 
 BG_FONDO = "#07040d"
 BG_TARJETA = "#0f081d"
@@ -19,11 +18,6 @@ NEON_PURPLE = "#b026ff"
 NEON_BORDER = "#8c1eff"
 NEON_BG_BTN = "#9d00ff"
 TEXT_MUTED = "#a0a0a0"
-
-
-def _formatear_monto(monto):
-    valor = f"{monto:,.2f}"
-    return "$ " + valor.replace(".", "X").replace(",", ".").replace("X", ",")
 
 
 def render_home_operaciones(page: ft.Page):
@@ -178,18 +172,9 @@ def render_home_operaciones(page: ft.Page):
         keyboard_type=ft.KeyboardType.NUMBER,
     )
 
-    def _mostrar_notificacion(texto, es_error=False):
-        snack = ft.SnackBar(
-            ft.Text(texto, color="#ffffff"),
-            bgcolor="#dc2626" if es_error else "#16a34a",
-        )
-        page.overlay.append(snack)
-        snack.open = True
-        page.update()
-
     def _ejecutar_operacion(e):
         if not txt_monto.value:
-            _mostrar_notificacion("Ingrese un monto a operar", es_error=True)
+            _mostrar_notificacion(page, "Ingrese un monto a operar", es_error=True)
             return
 
         try:
@@ -203,7 +188,7 @@ def render_home_operaciones(page: ft.Page):
             cuenta = _cuenta_para_toggle(cuenta_seleccionada[0])
             if cuenta is None:
                 _mostrar_notificacion(
-                    f"No tenés cuenta {cuenta_seleccionada[0]}.", es_error=True)
+                    page, f"No tenés cuenta {cuenta_seleccionada[0]}.", es_error=True)
                 return
 
             # Persiste en BD (saldo + transacción) vía DAO temporal.
@@ -214,14 +199,15 @@ def render_home_operaciones(page: ft.Page):
 
             txt_monto.value = ""
             _mostrar_notificacion(
+                page,
                 f"{op} de {_formatear_monto(monto)} en cuenta "
                 f"{cuenta.get_nro_cuenta()} realizado con éxito.")
             page.update()
 
         except ValueError:
-            _mostrar_notificacion("Formato de monto inválido", es_error=True)
+            _mostrar_notificacion(page, "Formato de monto inválido", es_error=True)
         except Exception as ex:
-            _mostrar_notificacion(f"Error: {ex}", es_error=True)
+            _mostrar_notificacion(page, f"Error: {ex}", es_error=True)
 
     btn_ejecutar = ft.Container(
         padding=ft.Padding(0, 12, 0, 12),

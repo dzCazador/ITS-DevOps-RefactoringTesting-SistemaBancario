@@ -5,7 +5,7 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.dao_personal import DAOPersonal
+from src.app_context import dao_personal as _dao
 from src.home_crear_cliente import render_gestion_cliente
 from src.navegacion import ir_a
 from src.sesion import Sesion
@@ -18,10 +18,6 @@ BORDE_NEON_BRIGHT = "#a855f7"
 LINEA_DIVISORIA = "#232130"
 COLOR_ENCABEZADO = "#7e7894"
 COLOR_BLANCO = "#ffffff"
-
-# Temporal: subclase del DAO con lo que el panel necesita hasta que
-# BE-07/08/09 se reescriban (ver src/dao_personal.py).
-_dao = DAOPersonal("sistema_bancario.db")
 
 
 def _es_personal():

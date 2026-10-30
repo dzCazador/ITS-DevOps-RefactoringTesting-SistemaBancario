@@ -6,11 +6,11 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.app_context import dao as _dao
 from src.autenticacion import Autenticacion
-from src.dao import DAO
 from src.sesion import Sesion
+from src.ui_utils import mostrar_notificacion
 
-_dao = DAO("sistema_bancario.db")
 _autenticacion = Autenticacion(_dao)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,12 +87,7 @@ def render_login(page: ft.Page):
             ir_a(page, render_home_personal)
 
     def mostrar_mensaje(texto, es_error=False):
-        page.snack_bar = ft.SnackBar(
-            ft.Text(texto),
-            bgcolor="red" if es_error else "green"
-        )
-        page.snack_bar.open = True
-        page.update()
+        mostrar_notificacion(page, texto, es_error)
 
     btn_ingresar = ft.Button(
         content=ft.Text("INGRESAR", size=15, weight=ft.FontWeight.BOLD, color="#ffffff"),

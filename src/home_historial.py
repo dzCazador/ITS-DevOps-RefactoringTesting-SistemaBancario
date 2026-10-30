@@ -4,12 +4,10 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.dao_cliente import DAOCliente
+from src.app_context import dao_cliente as _dao
 from src.navegacion import crear_bottom_nav, ir_a, nombre_cuenta_para_header
 from src.sesion import Sesion
-
-# Temporal hasta BE-10/11 de Daniel (ver src/dao_cliente.py).
-_dao = DAOCliente("sistema_bancario.db")
+from src.ui_utils import formatear_monto_con_signo as _formatear_monto_mov
 
 # Paleta de colores
 BG_FONDO = "#07040d"
@@ -20,12 +18,6 @@ NEON_BG_BTN = "#9d00ff"
 GREEN_NEON = "#4ade80"
 RED_NEON = "#f87171"
 TEXT_MUTED = "#a0a0a0"
-
-
-def _formatear_monto_mov(monto):
-    signo = "+ " if monto > 0 else "- "
-    val = f"{abs(monto):,.2f}".replace(".", "X").replace(",", ".").replace("X", ",")
-    return f"{signo}{val}"
 
 
 def render_home_historial(page: ft.Page):

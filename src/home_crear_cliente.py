@@ -5,15 +5,10 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.app_context import dao_personal as _dao
 from src.cliente import Cliente
-from src.dao_personal import DAOPersonal
 from src.navegacion import ir_a
 from src.sesion import Sesion
-
-
-# Temporal: subclase del DAO con lo que el panel necesita hasta que
-# BE-07/08/09 se reescriban (ver src/dao_personal.py).
-_dao = DAOPersonal("sistema_bancario.db")
 
 
 # ============================================================

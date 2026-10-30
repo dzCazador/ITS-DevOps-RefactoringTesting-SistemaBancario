@@ -9,20 +9,15 @@ from src.cuenta import Cuenta
 from src.cuenta_ahorro import CuentaAhorro
 from src.navegacion import ir_a, crear_bottom_nav
 from src.sesion import Sesion
+from src.ui_utils import Colores, formatear_monto as _formatear_monto
 
-BG_FONDO = "#0a0a0f"
-BG_TARJETA = "#181820"
-BORDE_NEON = "#8b2fc9"
-NEON_CLARO = "#a855f7"
-BORDE_TARJETA = "#2d1b4e"
-GRIS = "#a0a0a0"
-GRIS_OSCURO = "#7a7a7a"
-
-
-def _formatear_monto(monto):
-    """Formatea 12500.00 -> '$ 12.500,00'."""
-    valor = f"{monto:,.2f}"
-    return "$ " + valor.replace(".", "X").replace(",", ".").replace("X", ",")
+BG_FONDO = Colores.FONDO
+BG_TARJETA = Colores.TARJETA
+BORDE_NEON = Colores.VIOLETA
+NEON_CLARO = Colores.VIOLETA_CLARO
+BORDE_TARJETA = Colores.BORDE_TARJETA
+GRIS = Colores.TEXTO_SUAVE
+GRIS_OSCURO = Colores.TEXTO_MUTED
 
 
 def _nombre_tipo(cuenta):

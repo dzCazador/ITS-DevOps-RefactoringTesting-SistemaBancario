@@ -6,8 +6,8 @@ from src.autenticacion import Autenticacion
 from src.cliente import Cliente
 from src.cuenta import Cuenta
 from src.dao import DAO
-from src.empleado import Empleado
 from src.persona import Persona
+from src.persona_builder import EmpleadoBuilder
 
 
 @pytest.fixture
@@ -48,17 +48,19 @@ def test_autenticar_cliente_sin_cuentas_devuelve_lista_vacia(dao):
 
 
 def test_autenticar_personal_devuelve_rol_sin_cuentas(dao):
-    empleado = Empleado(
-        "Luis",
-        "Pérez",
-        "23456789",
-        legajo="E-1001",
-        cargo="Analista",
-        departamento="Sistemas",
-        fecha_ingreso=datetime(2024, 1, 15),
-        salario=85000,
-        sucursal="Central",
-        password="ClaveSegura3",
+    empleado = (
+        EmpleadoBuilder()
+        .con_nombre("Luis")
+        .con_apellido("Pérez")
+        .con_dni("23456789")
+        .con_password("ClaveSegura3")
+        .con_legajo("E-1001")
+        .con_cargo("Analista")
+        .con_departamento("Sistemas")
+        .con_fecha_ingreso(datetime(2024, 1, 15))
+        .con_salario(85000)
+        .con_sucursal("Central")
+        .build()
     )
     dao.guardar_empleado(
         empleado,
