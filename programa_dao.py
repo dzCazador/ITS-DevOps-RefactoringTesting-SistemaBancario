@@ -6,9 +6,9 @@ from datetime import datetime
 from pathlib import Path
 
 from src.autenticacion import Autenticacion
-from src.cliente import Cliente
+from src.modelos.cliente import Cliente
 from src.dao import DAO
-from src.empleado import Empleado
+from src.modelos.empleado import Empleado
 
 
 def copiar_estado_original(ruta_bd: Path):

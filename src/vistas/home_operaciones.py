@@ -13,10 +13,10 @@ from src.controladores.operacion_controller import (
     MontoNoPositivoError,
     MontoVacioError,
 )
-from src.navegacion import crear_bottom_nav, nombre_cuenta_para_header
+from src.vistas.navegacion import crear_bottom_nav, nombre_cuenta_para_header
 from src.sesion import Sesion
-from src.ui_utils import formatear_monto as _formatear_monto
-from src.ui_utils import mostrar_notificacion as _mostrar_notificacion
+from src.vistas.ui_utils import formatear_monto as _formatear_monto
+from src.vistas.ui_utils import mostrar_notificacion as _mostrar_notificacion
 
 BG_FONDO = "#07040d"
 BG_TARJETA = "#0f081d"

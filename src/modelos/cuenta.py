@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.transaccion import Transaccion
+from src.modelos.transaccion import Transaccion
 
 
 class SaldoInsuficienteError(Exception):

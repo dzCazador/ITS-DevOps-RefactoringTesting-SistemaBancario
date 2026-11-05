@@ -1,5 +1,5 @@
 import pytest
-from src.cliente import Cliente
+from src.modelos.cliente import Cliente
 from src.tarjeta import Tarjeta, LimiteExcedidoError
 
 

@@ -13,9 +13,9 @@ Cuando BE-10/11 se entreguen (Daniel) y el DAO base incorpore estas
 operaciones, este archivo se elimina y las vistas vuelven a usar `DAO`.
 """
 
-from src.cuenta import SaldoInsuficienteError
+from src.modelos.cuenta import SaldoInsuficienteError
 from src.dao import DAO
-from src.transaccion import Transaccion
+from src.modelos.transaccion import Transaccion
 
 
 class DAOCliente(DAO):

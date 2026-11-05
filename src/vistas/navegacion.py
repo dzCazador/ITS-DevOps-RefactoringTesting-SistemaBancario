@@ -51,13 +51,13 @@ def crear_bottom_nav(page: ft.Page, activo: str):
     `activo` es una de: "inicio", "operar", "historial".
     """
     def ir_inicio(e):
-        from src.home_cliente import render_home_cliente
+        from src.vistas.home_cliente import render_home_cliente
         ir_a(page, render_home_cliente)
     def ir_operar(e):
-        from src.home_operaciones import render_home_operaciones
+        from src.vistas.home_operaciones import render_home_operaciones
         ir_a(page, render_home_operaciones)
     def ir_historial(e):
-        from src.home_historial import render_home_historial
+        from src.vistas.home_historial import render_home_historial
         ir_a(page, render_home_historial)
 
     return ft.Container(

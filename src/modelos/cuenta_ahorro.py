@@ -1,4 +1,4 @@
-from src.cuenta import Cuenta
+from src.modelos.cuenta import Cuenta
 
 
 class CuentaAhorro(Cuenta):

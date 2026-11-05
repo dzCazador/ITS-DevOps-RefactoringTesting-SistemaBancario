@@ -11,14 +11,14 @@ from datetime import datetime
 
 import pytest
 
-from src.cliente import Cliente
-from src.cuenta import Cuenta
-from src.cuenta_ahorro import CuentaAhorro
-from src.cuenta_factory import CuentaFactory
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta
+from src.modelos.cuenta_ahorro import CuentaAhorro
+from src.modelos.cuenta_factory import CuentaFactory
 from src.dao import DAO
 from src.database import DatabaseConnection
-from src.empleado import Empleado
-from src.persona_builder import ClienteBuilder, EmpleadoBuilder, PersonaBuilder
+from src.modelos.empleado import Empleado
+from src.modelos.persona_builder import ClienteBuilder, EmpleadoBuilder, PersonaBuilder
 
 
 # ============================================================

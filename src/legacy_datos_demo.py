@@ -1,6 +1,6 @@
-from src.cliente import Cliente
-from src.cuenta import Cuenta
-from src.cuenta_ahorro import CuentaAhorro
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta
+from src.modelos.cuenta_ahorro import CuentaAhorro
 
 
 _USUARIOS = None

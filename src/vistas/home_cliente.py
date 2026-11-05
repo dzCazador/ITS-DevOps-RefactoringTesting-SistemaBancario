@@ -6,9 +6,9 @@ import flet as ft
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.app_context import cliente_controller as _clientes
-from src.navegacion import ir_a, crear_bottom_nav
+from src.vistas.navegacion import ir_a, crear_bottom_nav
 from src.sesion import Sesion
-from src.ui_utils import Colores, formatear_monto as _formatear_monto
+from src.vistas.ui_utils import Colores, formatear_monto as _formatear_monto
 
 BG_FONDO = Colores.FONDO
 BG_TARJETA = Colores.TARJETA
@@ -83,7 +83,7 @@ def render_home_cliente(page: ft.Page):
 
     def _cerrar_sesion(e):
         Sesion.cerrar()
-        from src.login import render_login
+        from src.vistas.login import render_login
         ir_a(page, render_login)
 
     def _aviso_construccion(mensaje):

@@ -6,8 +6,8 @@ import flet as ft
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.app_context import cliente_controller as _clientes
-from src.home_crear_cliente import render_gestion_cliente
-from src.navegacion import ir_a
+from src.vistas.home_crear_cliente import render_gestion_cliente
+from src.vistas.navegacion import ir_a
 from src.sesion import Sesion
 
 # Paleta de colores - Capital Bank Desktop Neon
@@ -26,7 +26,7 @@ def _es_personal():
 
 
 def _ir_login(page):
-    from src.login import render_login
+    from src.vistas.login import render_login
     ir_a(page, render_login)
 
 

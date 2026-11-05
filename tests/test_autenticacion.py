@@ -3,11 +3,11 @@ from datetime import datetime
 import pytest
 
 from src.autenticacion import Autenticacion
-from src.cliente import Cliente
-from src.cuenta import Cuenta
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta
 from src.dao import DAO
-from src.persona import Persona
-from src.persona_builder import EmpleadoBuilder
+from src.modelos.persona import Persona
+from src.modelos.persona_builder import EmpleadoBuilder
 
 
 @pytest.fixture

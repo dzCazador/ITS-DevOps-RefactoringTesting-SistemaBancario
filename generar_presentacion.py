@@ -363,13 +363,13 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
 
     code_s4_antes = [
         "# ANTES: Cada vista creaba su propia instancia",
-        "# src/login.py",
+        "# src/vistas/login.py",
         "_dao = DAO('sistema_bancario.db')          # engine #1",
         "",
-        "# src/home_personal.py",
+        "# src/vistas/home_personal.py",
         "_dao = DAOPersonal('sistema_bancario.db')  # engine #2",
         "",
-        "# src/home_operaciones.py",
+        "# src/vistas/home_operaciones.py",
         "_dao = DAOCliente('sistema_bancario.db')   # engine #3",
         "# ... hasta 6 engines compitiendo por SQLite!"
     ]
@@ -409,12 +409,12 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
 
     code_s5_antes = [
         "# ANTES: Lógica de creación dispersa en vistas",
-        "# src/home_cliente.py",
+        "# src/vistas/home_cliente.py",
         "def _nombre_tipo(cuenta):",
         "    if isinstance(cuenta, CuentaAhorro): return 'Caja de Ahorro'",
         "    if isinstance(cuenta, Cuenta): return 'Corriente'",
         "",
-        "# src/home_operaciones.py",
+        "# src/vistas/home_operaciones.py",
         "if etiqueta == 'Ahorro' and 'ahorro' in nombre_tipo.lower(): ...",
         "",
         "# src/autenticacion.py (BUG: perdía aplicar_interes)",
@@ -429,7 +429,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
                              code_s5_antes, bullets_s5_antes)
 
     code_s5_despues = [
-        "# DESPUES: Fábrica extensible en src/cuenta_factory.py",
+        "# DESPUES: Fábrica extensible en src/modelos/cuenta_factory.py",
         "class CuentaFactory:",
         "    _creadores = {}",
         "    @classmethod",
@@ -478,7 +478,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
                              code_s6_antes, bullets_s6_antes)
 
     code_s6_despues = [
-        "# DESPUES: Fluent Interface en src/persona_builder.py",
+        "# DESPUES: Fluent Interface en src/modelos/persona_builder.py",
         "empleado = (",
         "    EmpleadoBuilder()",
         "    .con_nombre('Luis')",
@@ -528,7 +528,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
                              code_s7_antes, bullets_s7_antes)
 
     code_s7_despues = [
-        "# DESPUES: Fuente de verdad única en src/ui_utils.py",
+        "# DESPUES: Fuente de verdad única en src/vistas/ui_utils.py",
         "class Colores:",
         "    FONDO = '#0a0a0f'; VIOLETA = '#8b2fc9'",
         "    VERDE = '#16a34a'; ROJO = '#dc2626'",
@@ -537,7 +537,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
         "def mostrar_notificacion(page, texto, es_error=False): ...",
         "",
         "# En las vistas (home_cliente.py, etc.):",
-        "from src.ui_utils import Colores, formatear_monto, mostrar_notificacion"
+        "from src.vistas.ui_utils import Colores, formatear_monto, mostrar_notificacion"
     ]
     bullets_s7_despues = [
         ("Fuente de Verdad", "Cambiar el formato o paleta requiere editar 1 solo archivo."),
@@ -724,8 +724,8 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
 
     code_mvc2_antes = [
         "# ANTES: sin controlador, la vista usaba el ORM",
-        "# src/home_operaciones.py",
-        "from src.models import TipoCuentaModel",
+        "# src/vistas/home_operaciones.py",
+        "from src.modelos.models import TipoCuentaModel",
         "conn = connect()  # acceso directo a SQLite",
         "# Validación de monto y reglas de cuenta en la vista",
         "# Notificación llamada sin el argumento page"
@@ -742,7 +742,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
         "# DESPUÉS: la vista solo delega",
         "# src/app_context.py",
         "operacion_controller = OperacionController(dao_cliente)",
-        "# src/home_operaciones.py",
+        "# src/vistas/home_operaciones.py",
         "resultado = _operaciones.ejecutar_operacion(",
         "    cuentas, etiqueta, tipo, texto_monto)",
         "# src/controladores/operacion_controller.py",

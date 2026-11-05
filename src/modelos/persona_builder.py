@@ -24,9 +24,9 @@ Las validaciones siguen viviendo en los constructores de dominio:
 ``build()`` simplemente delega, por lo que ninguna regla se saltea.
 """
 
-from src.cliente import Cliente
-from src.empleado import Empleado
-from src.persona import Persona
+from src.modelos.cliente import Cliente
+from src.modelos.empleado import Empleado
+from src.modelos.persona import Persona
 
 
 class PersonaBuilder:

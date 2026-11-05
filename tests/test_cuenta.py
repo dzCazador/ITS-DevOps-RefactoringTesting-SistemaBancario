@@ -1,9 +1,9 @@
 import pytest
 from datetime import datetime
 
-from src.cliente import Cliente
-from src.cuenta import Cuenta, SaldoInsuficienteError
-from src.cliente import Cliente
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta, SaldoInsuficienteError
+from src.modelos.cliente import Cliente
 
 
 # ==============================================================================

@@ -1,6 +1,6 @@
 """Factory Method para la creación de cuentas bancarias.
 
-Centraliza la decisión de qué subclase de :class:`src.cuenta.Cuenta`
+Centraliza la decisión de qué subclase de :class:`src.modelos.cuenta.Cuenta`
 instanciar según el tipo de cuenta ("Ahorro", "Corriente", ...).
 
 Antes de este refactor, la lógica de elección estaba dispersa y
@@ -10,8 +10,8 @@ basta con registrar un nuevo creador para soportar un nuevo tipo de
 cuenta (principio Open/Closed).
 """
 
-from src.cuenta import Cuenta
-from src.cuenta_ahorro import CuentaAhorro
+from src.modelos.cuenta import Cuenta
+from src.modelos.cuenta_ahorro import CuentaAhorro
 
 # Tasa de interés por defecto (%) para las cuentas de ahorro nuevas.
 TASA_AHORRO_DEFAULT = 1.0

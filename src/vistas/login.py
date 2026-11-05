@@ -12,7 +12,7 @@ from src.controladores.auth_controller import (
     CredencialesInvalidasError,
 )
 from src.sesion import Sesion
-from src.ui_utils import mostrar_notificacion
+from src.vistas.ui_utils import mostrar_notificacion
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_PATH = os.path.join(BASE_DIR, "img", "logo_clean.png")
@@ -75,9 +75,9 @@ def render_login(page: ft.Page):
         Sesion.iniciar(usuario)
         mostrar_mensaje(f"Sesión iniciada como {usuario['rol']}", es_error=False)
 
-        from src.home_cliente import render_home_cliente
-        from src.home_personal import render_home_personal
-        from src.navegacion import ir_a
+        from src.vistas.home_cliente import render_home_cliente
+        from src.vistas.home_personal import render_home_personal
+        from src.vistas.navegacion import ir_a
 
         if usuario["rol"] == "cliente":
             ir_a(page, render_home_cliente)

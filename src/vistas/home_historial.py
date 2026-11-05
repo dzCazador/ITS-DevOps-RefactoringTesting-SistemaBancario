@@ -5,9 +5,9 @@ import flet as ft
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from src.app_context import historial_controller as _historial
-from src.navegacion import crear_bottom_nav, ir_a, nombre_cuenta_para_header
+from src.vistas.navegacion import crear_bottom_nav, ir_a, nombre_cuenta_para_header
 from src.sesion import Sesion
-from src.ui_utils import formatear_monto_con_signo as _formatear_monto_mov
+from src.vistas.ui_utils import formatear_monto_con_signo as _formatear_monto_mov
 
 # Paleta de colores
 BG_FONDO = "#07040d"
@@ -31,7 +31,7 @@ def render_home_historial(page: ft.Page):
 
     usuario = Sesion.actual()
     if not usuario:
-        from src.login import render_login
+        from src.vistas.login import render_login
         ir_a(page, render_login)
         return
     nombre = usuario.get("nombre", "Cliente")
@@ -45,7 +45,7 @@ def render_home_historial(page: ft.Page):
 
     def _cerrar_sesion(e):
         Sesion.cerrar()
-        from src.login import render_login
+        from src.vistas.login import render_login
         ir_a(page, render_login)
 
     def _actualizar_tabla():

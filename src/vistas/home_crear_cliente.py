@@ -6,7 +6,7 @@ import flet as ft
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.app_context import cliente_controller as _clientes
-from src.navegacion import ir_a
+from src.vistas.navegacion import ir_a
 from src.sesion import Sesion
 
 
@@ -39,7 +39,7 @@ def render_gestion_cliente(page: ft.Page, dni=None):
 
     # Imports diferidos: home_personal importa este módulo a nivel superior,
     # así se evita el ciclo home_personal <-> home_crear_cliente.
-    from src.home_personal import _aviso, _es_personal, _ir_login
+    from src.vistas.home_personal import _aviso, _es_personal, _ir_login
 
     # =====================================================
     # CONFIGURACIÓN GENERAL
@@ -60,7 +60,7 @@ def render_gestion_cliente(page: ft.Page, dni=None):
 
     if not es_nuevo and datos is None:
         _aviso(page, "No existe un cliente con ese DNI.", ok=False)
-        from src.home_personal import render_home_personal
+        from src.vistas.home_personal import render_home_personal
         ir_a(page, render_home_personal)
         return
 
@@ -446,7 +446,7 @@ def render_gestion_cliente(page: ft.Page, dni=None):
             )
 
     def _volver(e):
-        from src.home_personal import render_home_personal
+        from src.vistas.home_personal import render_home_personal
         ir_a(
             page,
             render_home_personal,

@@ -6,7 +6,7 @@ on Flet. Persistence tests use a temporary SQLite file per test.
 
 import pytest
 
-from src.cliente import Cliente
+from src.modelos.cliente import Cliente
 from src.controladores.auth_controller import (
     AuthController,
     CamposIncompletosError,
@@ -21,8 +21,8 @@ from src.controladores.operacion_controller import (
     MontoVacioError,
     OperacionController,
 )
-from src.cuenta import SaldoInsuficienteError
-from src.cuenta_factory import CuentaFactory
+from src.modelos.cuenta import SaldoInsuficienteError
+from src.modelos.cuenta_factory import CuentaFactory
 from src.dao_cliente import DAOCliente
 from src.dao_personal import DAOPersonal
 from src.database import DatabaseConnection
@@ -260,7 +260,7 @@ def test_home_operaciones_notifica_monto_no_positivo_sin_error_interno(monkeypat
     pytest.importorskip("flet")
     import flet as ft
 
-    import src.home_operaciones as vista
+    import src.vistas.home_operaciones as vista
 
     notificaciones = []
 

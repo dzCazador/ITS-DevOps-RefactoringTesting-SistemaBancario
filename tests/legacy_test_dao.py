@@ -1,6 +1,6 @@
 import pytest
 from src.dao import DAO
-from src.cliente import Cliente
+from src.modelos.cliente import Cliente
 
 
 # ==============================================================================

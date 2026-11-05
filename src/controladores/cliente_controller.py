@@ -7,10 +7,10 @@ legacy management screen (vista_gestion_clientes) through the same DAO.
 from sqlalchemy import select
 
 from src import gestion_clientes
-from src.cliente import Cliente
-from src.cuenta import Cuenta
-from src.cuenta_ahorro import CuentaAhorro
-from src.models import TipoCuentaModel
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta
+from src.modelos.cuenta_ahorro import CuentaAhorro
+from src.modelos.models import TipoCuentaModel
 
 
 def nombres_tipo_cuenta(dao) -> dict[int, str]:

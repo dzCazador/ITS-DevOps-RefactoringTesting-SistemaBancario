@@ -1,6 +1,6 @@
 import pytest
-from src.cliente import Cliente
-from src.cuenta import Cuenta, SaldoInsuficienteError
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta, SaldoInsuficienteError
 
 
 def test_crear_cuenta_valida():

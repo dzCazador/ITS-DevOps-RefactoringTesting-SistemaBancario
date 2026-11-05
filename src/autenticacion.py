@@ -1,10 +1,10 @@
 from sqlalchemy import select
 
-from src.cliente import Cliente
-from src.cuenta import Cuenta
-from src.cuenta_factory import CuentaFactory
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta
+from src.modelos.cuenta_factory import CuentaFactory
 from src.dao import DAO
-from src.models import EmpleadoModel, TipoCuentaModel
+from src.modelos.models import EmpleadoModel, TipoCuentaModel
 
 
 class Autenticacion:

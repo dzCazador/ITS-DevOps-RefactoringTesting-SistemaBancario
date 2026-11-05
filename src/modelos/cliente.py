@@ -1,4 +1,4 @@
-from src.persona import Persona
+from src.modelos.persona import Persona
 
 
 class Cliente(Persona):

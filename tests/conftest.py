@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Intenta importar la Base de SQLAlchemy si existe
 try:
-    from src.models import Base
+    from src.modelos.models import Base
 except Exception:
     Base = None
 

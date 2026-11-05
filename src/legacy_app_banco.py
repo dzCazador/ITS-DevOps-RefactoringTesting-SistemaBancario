@@ -1,10 +1,10 @@
 import flet as ft
 import threading
-from src.cliente import Cliente
-from src.cuenta import Cuenta, SaldoInsuficienteError
+from src.modelos.cliente import Cliente
+from src.modelos.cuenta import Cuenta, SaldoInsuficienteError
 from src.tarjeta import Tarjeta
-from src.transaccion import Transaccion
-from src.cuenta_ahorro import CuentaAhorro
+from src.modelos.transaccion import Transaccion
+from src.modelos.cuenta_ahorro import CuentaAhorro
 from src.legacy_exportar_pdf import generar_pdf_reporte
 from src.dao import DAO
 
@@ -187,7 +187,7 @@ def main(page: ft.Page):
         if cliente_actual is None:
              return False, "No hay cliente seleccionado para exportar."
         
-        from src.cuenta_ahorro import CuentaAhorro 
+        from src.modelos.cuenta_ahorro import CuentaAhorro 
         
         # --- Generación del PDF ---
         return generar_pdf_reporte(
