@@ -13,6 +13,7 @@ from src.controladores.operacion_controller import (
     MontoNoPositivoError,
     MontoVacioError,
 )
+from src.modelos.errores import TransferenciaInvalidaError
 from src.vistas.navegacion import crear_bottom_nav, nombre_cuenta_para_header
 from src.sesion import Sesion
 from src.vistas.ui_utils import formatear_monto as _formatear_monto
@@ -133,20 +134,40 @@ def render_home_operaciones(page: ft.Page):
         ),
     )
 
+    btn_op_transferir = ft.Container(
+        expand=True,
+        padding=ft.Padding(0, 10, 0, 10),
+        border=ft.border.all(1, NEON_BORDER),
+        border_radius=20,
+        alignment=ft.Alignment(0, 0),
+        content=ft.Row(
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=8,
+            controls=[
+                ft.Icon(ft.Icons.SWAP_HORIZ_ROUNDED, color="#ffffff", size=18),
+                ft.Text("Transferir", color="#ffffff", size=13),
+            ],
+        ),
+    )
+
     def _seleccionar_operacion(tipo, btn_sel):
         tipo_operacion[0] = tipo
         btn_op_depositar.bgcolor = None
         btn_op_depositar.border = ft.border.all(1, NEON_BORDER)
         btn_op_retirar.bgcolor = None
         btn_op_retirar.border = ft.border.all(1, NEON_BORDER)
+        btn_op_transferir.bgcolor = None
+        btn_op_transferir.border = ft.border.all(1, NEON_BORDER)
 
         btn_sel.bgcolor = NEON_BG_BTN
         btn_sel.border = None
         lbl_btn_ejecutar.value = tipo
+        txt_destino.visible = tipo == "Transferir"
         page.update()
 
     btn_op_depositar.on_click = lambda e: _seleccionar_operacion("Depositar", btn_op_depositar)
     btn_op_retirar.on_click = lambda e: _seleccionar_operacion("Retirar", btn_op_retirar)
+    btn_op_transferir.on_click = lambda e: _seleccionar_operacion("Transferir", btn_op_transferir)
 
     # Campo de Monto
     txt_monto = ft.TextField(
@@ -162,14 +183,38 @@ def render_home_operaciones(page: ft.Page):
         keyboard_type=ft.KeyboardType.NUMBER,
     )
 
+    # Campo de cuenta destino (solo para transferir)
+    txt_destino = ft.TextField(
+        value="",
+        label="Cuenta destino (nro)",
+        visible=False,
+        border_color=NEON_BORDER,
+        focused_border_color=NEON_PURPLE,
+        border_radius=12,
+        text_size=16,
+        color="#ffffff",
+        height=50,
+        keyboard_type=ft.KeyboardType.TEXT,
+    )
+
     def _ejecutar_operacion(e):
+        es_transferencia = tipo_operacion[0] == "Transferir"
+        destino = txt_destino.value.strip() if txt_destino.value else ""
         try:
-            resultado = _operaciones.ejecutar_operacion(
-                cuentas,
-                cuenta_seleccionada[0],
-                tipo_operacion[0],
-                txt_monto.value,
-            )
+            if es_transferencia:
+                resultado = _operaciones.transferir(
+                    cuentas,
+                    cuenta_seleccionada[0],
+                    destino,
+                    txt_monto.value,
+                )
+            else:
+                resultado = _operaciones.ejecutar_operacion(
+                    cuentas,
+                    cuenta_seleccionada[0],
+                    tipo_operacion[0],
+                    txt_monto.value,
+                )
         except MontoVacioError:
             _mostrar_notificacion(page, "Ingrese un monto a operar", es_error=True)
             return
@@ -180,18 +225,32 @@ def render_home_operaciones(page: ft.Page):
             _mostrar_notificacion(page, "Ingrese un monto mayor a 0", es_error=True)
             return
         except CuentaNoEncontradaError as ex:
-            _mostrar_notificacion(
-                page, f"No tenés cuenta {ex.etiqueta}.", es_error=True)
+            if es_transferencia:
+                _mostrar_notificacion(
+                    page, f"No se encontró la cuenta {ex.etiqueta}.", es_error=True)
+            else:
+                _mostrar_notificacion(
+                    page, f"No tenés cuenta {ex.etiqueta}.", es_error=True)
+            return
+        except TransferenciaInvalidaError as ex:
+            _mostrar_notificacion(page, str(ex), es_error=True)
             return
         except Exception as ex:
             _mostrar_notificacion(page, f"Error: {ex}", es_error=True)
             return
 
         txt_monto.value = ""
-        _mostrar_notificacion(
-            page,
-            f"{resultado.tipo} de {_formatear_monto(resultado.monto)} en cuenta "
-            f"{resultado.nro_cuenta} realizado con éxito.")
+        if es_transferencia:
+            txt_destino.value = ""
+            _mostrar_notificacion(
+                page,
+                f"Transferencia de {_formatear_monto(resultado.monto)} desde cuenta "
+                f"{resultado.nro_cuenta} a cuenta {destino} realizada con éxito.")
+        else:
+            _mostrar_notificacion(
+                page,
+                f"{resultado.tipo} de {_formatear_monto(resultado.monto)} en cuenta "
+                f"{resultado.nro_cuenta} realizado con éxito.")
         page.update()
 
     btn_ejecutar = ft.Container(
@@ -222,8 +281,9 @@ def render_home_operaciones(page: ft.Page):
                     ],
                 ),
                 ft.Row(controls=[btn_cuenta_corriente, btn_cuenta_caja], spacing=10),
-                ft.Row(controls=[btn_op_depositar, btn_op_retirar], spacing=10),
+                ft.Row(controls=[btn_op_depositar, btn_op_retirar, btn_op_transferir], spacing=10),
                 txt_monto,
+                txt_destino,
                 btn_ejecutar,
             ],
         ),

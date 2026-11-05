@@ -23,6 +23,8 @@ from src.controladores.operacion_controller import (
 )
 from src.modelos.cuenta import SaldoInsuficienteError
 from src.modelos.cuenta_factory import CuentaFactory
+from src.modelos.errores import TransferenciaInvalidaError
+from src.modelos.models import TipoTransaccionModel
 from src.dao_cliente import DAOCliente
 from src.dao_personal import DAOPersonal
 from src.database import DatabaseConnection
@@ -308,3 +310,173 @@ def test_home_operaciones_notifica_monto_no_positivo_sin_error_interno(monkeypat
         Sesion.cerrar()
 
     assert notificaciones == [("Ingrese un monto mayor a 0", True)]
+
+
+# ============================================================
+# Transferencias entre clientes distintos
+# ============================================================
+
+def _dos_clientes_con_cuentas(dao, saldo_origen=100.0, saldo_destino=20.0):
+    id_a = _sembrar_cliente(dao, dni="40345678")
+    id_b = _sembrar_cliente(dao, dni="30111222")
+    id_tipo = dao.guardar_tipo_cuenta("Corriente")
+    dao.guardar_cuenta("CC-ORIGEN", id_a, id_tipo, saldo=saldo_origen)
+    dao.guardar_cuenta("CC-DESTINO", id_b, id_tipo, saldo=saldo_destino)
+    return id_a, id_b
+
+
+def _saldo(dao, nro):
+    return dao.obtener_cuenta_por_numero(nro)[4]
+
+
+def _nombre_tipo_transaccion(dao, id_tipo):
+    with dao.connect() as session:
+        return session.get(TipoTransaccionModel, id_tipo).nombre
+
+
+def _cuenta_dominio_por_numero(dao, nro, dni):
+    fila = dao.obtener_cuenta_por_numero(nro)
+    return CuentaFactory.crear_desde_fila(fila, Cliente("Maria", "Fernandez", dni), "Corriente")
+
+
+def test_transferir_mueve_saldo_entre_clientes_distintos(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    saldo = dao_cliente.transferir("CC-ORIGEN", "CC-DESTINO", 30.0)
+
+    assert saldo == 70.0
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 70.0
+    assert _saldo(dao_cliente, "CC-DESTINO") == 50.0
+
+
+def test_transferir_registra_enviada_en_origen_y_recibida_en_destino(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    dao_cliente.transferir("CC-ORIGEN", "CC-DESTINO", 30.0)
+
+    enviadas = dao_cliente.obtener_transacciones_por_cuenta(dao_cliente.obtener_cuenta_por_numero("CC-ORIGEN")[0])
+    recibidas = dao_cliente.obtener_transacciones_por_cuenta(dao_cliente.obtener_cuenta_por_numero("CC-DESTINO")[0])
+    assert len(enviadas) == 1 and len(recibidas) == 1
+    assert _nombre_tipo_transaccion(dao_cliente, enviadas[0][2]) == "transferencia_enviada"
+    assert _nombre_tipo_transaccion(dao_cliente, recibidas[0][2]) == "transferencia_recibida"
+    assert enviadas[0][3] == 30.0 and recibidas[0][3] == 30.0
+
+
+def test_transferir_con_saldo_insuficiente_no_modifica_saldos(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente, saldo_origen=10.0)
+
+    with pytest.raises(SaldoInsuficienteError):
+        dao_cliente.transferir("CC-ORIGEN", "CC-DESTINO", 50.0)
+
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 10.0
+    assert _saldo(dao_cliente, "CC-DESTINO") == 20.0
+
+
+def test_transferir_a_cuenta_inexistente_lanza_cuenta_no_encontrada(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    with pytest.raises(CuentaNoEncontradaError):
+        dao_cliente.transferir("CC-ORIGEN", "CC-NO-EXISTE", 10.0)
+
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 100.0
+
+
+def test_transferir_origen_inexistente_lanza_cuenta_no_encontrada(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    with pytest.raises(CuentaNoEncontradaError):
+        dao_cliente.transferir("CC-NO-EXISTE", "CC-DESTINO", 10.0)
+
+    assert _saldo(dao_cliente, "CC-DESTINO") == 20.0
+
+
+def test_transferir_entre_cuentas_del_mismo_cliente_se_rechaza(dao_cliente):
+    id_a, _ = _dos_clientes_con_cuentas(dao_cliente)
+    id_tipo_ahorro = dao_cliente.guardar_tipo_cuenta("Ahorro")
+    dao_cliente.guardar_cuenta("AH-PROPIA", id_a, id_tipo_ahorro, saldo=5.0)
+
+    with pytest.raises(TransferenciaInvalidaError):
+        dao_cliente.transferir("CC-ORIGEN", "AH-PROPIA", 10.0)
+
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 100.0
+    assert _saldo(dao_cliente, "AH-PROPIA") == 5.0
+
+
+def test_transferir_a_la_misma_cuenta_se_rechaza(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    with pytest.raises(TransferenciaInvalidaError):
+        dao_cliente.transferir("CC-ORIGEN", "CC-ORIGEN", 10.0)
+
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 100.0
+
+
+@pytest.mark.parametrize("monto", [0, -5])
+def test_transferir_monto_no_positivo_se_rechaza(dao_cliente, monto):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    with pytest.raises(ValueError):
+        dao_cliente.transferir("CC-ORIGEN", "CC-DESTINO", monto)
+
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 100.0
+
+
+def test_transferir_si_falla_el_credito_no_queda_debito(dao_cliente, monkeypatch):
+    _dos_clientes_con_cuentas(dao_cliente)
+    registrar_original = DAOCliente._registrar_transaccion
+
+    def falla_al_registrar_recibida(self, session, id_cuenta, nombre, monto):
+        if nombre == "transferencia_recibida":
+            raise RuntimeError("fallo simulado en el crédito")
+        return registrar_original(self, session, id_cuenta, nombre, monto)
+
+    monkeypatch.setattr(DAOCliente, "_registrar_transaccion", falla_al_registrar_recibida)
+
+    with pytest.raises(RuntimeError):
+        dao_cliente.transferir("CC-ORIGEN", "CC-DESTINO", 30.0)
+
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 100.0
+    assert _saldo(dao_cliente, "CC-DESTINO") == 20.0
+    assert dao_cliente.obtener_transacciones_por_cuenta(dao_cliente.obtener_cuenta_por_numero("CC-ORIGEN")[0]) == []
+
+
+def test_controlador_transferir_devuelve_resultado_y_saldo_origen(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+    origen = _cuenta_dominio_por_numero(dao_cliente, "CC-ORIGEN", "40345678")
+
+    resultado = OperacionController(dao_cliente).transferir([origen], "Corriente", "CC-DESTINO", "30")
+
+    assert resultado.tipo == "Transferir"
+    assert resultado.monto == 30.0
+    assert resultado.nro_cuenta == "CC-ORIGEN"
+    assert resultado.saldo == 70.0
+
+
+def test_controlador_transferir_valida_monto_antes_de_operar(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+    origen = _cuenta_dominio_por_numero(dao_cliente, "CC-ORIGEN", "40345678")
+
+    with pytest.raises(MontoVacioError):
+        OperacionController(dao_cliente).transferir([origen], "Corriente", "CC-DESTINO", "")
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 100.0
+
+
+def test_controlador_transferir_sin_cuenta_origen_del_tipo_lanza_cuenta_no_encontrada(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+    origen = _cuenta_dominio_por_numero(dao_cliente, "CC-ORIGEN", "40345678")
+
+    with pytest.raises(CuentaNoEncontradaError):
+        OperacionController(dao_cliente).transferir([origen], "Caja de ahorro", "CC-DESTINO", "10")
+
+
+def test_movimientos_mapea_transferencias_con_signo_correcto(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+    origen = _cuenta_dominio_por_numero(dao_cliente, "CC-ORIGEN", "40345678")
+    destino = _cuenta_dominio_por_numero(dao_cliente, "CC-DESTINO", "30111222")
+    dao_cliente.transferir("CC-ORIGEN", "CC-DESTINO", 30.0)
+
+    enviada = HistorialController(dao_cliente).movimientos([origen])
+    recibida = HistorialController(dao_cliente).movimientos([destino])
+
+    assert [(m["operacion"], m["monto"]) for m in enviada] == [("Transferencia enviada", -30.0)]
+    assert [(m["operacion"], m["monto"]) for m in recibida] == [("Transferencia recibida", 30.0)]

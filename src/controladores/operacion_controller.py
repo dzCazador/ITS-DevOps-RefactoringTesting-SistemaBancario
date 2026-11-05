@@ -3,6 +3,16 @@
 from dataclasses import dataclass
 
 from src.controladores.cliente_controller import nombres_tipo_cuenta
+from src.modelos.errores import CuentaNoEncontradaError
+
+__all__ = [
+    "CuentaNoEncontradaError",
+    "FormatoMontoError",
+    "MontoNoPositivoError",
+    "MontoVacioError",
+    "OperacionController",
+    "ResultadoOperacion",
+]
 
 
 class MontoVacioError(ValueError):
@@ -15,14 +25,6 @@ class FormatoMontoError(ValueError):
 
 class MontoNoPositivoError(ValueError):
     """The amount is zero or negative."""
-
-
-class CuentaNoEncontradaError(LookupError):
-    """The client has no account for the selected type."""
-
-    def __init__(self, etiqueta: str):
-        super().__init__(etiqueta)
-        self.etiqueta = etiqueta
 
 
 @dataclass(frozen=True)
@@ -84,5 +86,26 @@ class OperacionController:
             tipo=tipo,
             monto=monto,
             nro_cuenta=cuenta.get_nro_cuenta(),
+            saldo=saldo,
+        )
+
+    def transferir(self, cuentas, etiqueta_origen: str, nro_destino: str, texto_monto: str) -> ResultadoOperacion:
+        """Transfer from the origin account (chosen by label) to ``nro_destino``.
+
+        Domain errors (unknown destination, same holder, insufficient funds)
+        propagate from the DAO.
+        """
+        monto = self.parsear_monto(texto_monto)
+
+        origen = self.cuenta_para_etiqueta(cuentas, etiqueta_origen)
+        if origen is None:
+            raise CuentaNoEncontradaError(etiqueta_origen)
+
+        saldo = self._dao.transferir(origen.get_nro_cuenta(), nro_destino, monto)
+
+        return ResultadoOperacion(
+            tipo="Transferir",
+            monto=monto,
+            nro_cuenta=origen.get_nro_cuenta(),
             saldo=saldo,
         )
