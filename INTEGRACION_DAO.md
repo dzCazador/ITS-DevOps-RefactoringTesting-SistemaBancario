@@ -34,7 +34,7 @@ dao.cerrar_conexion()
 ### Clientes
 
 ```python
-from src.cliente import Cliente
+from src.modelos.cliente import Cliente
 
 id_cliente = dao.guardar_cliente(Cliente("Lucia", "Gomez", "30123456", categoria="NORMAL", estado="ACTIVO"))
 cliente = dao.obtener_cliente_por_dni("30123456")
@@ -43,7 +43,7 @@ cliente = dao.obtener_cliente_por_dni("30123456")
 ### Empleados
 
 ```python
-from src.empleado import Empleado
+from src.modelos.empleado import Empleado
 
 id_empleado = dao.guardar_empleado(
     Persona("Pedro", "López", "28765432", "pass123"),
@@ -138,7 +138,7 @@ El proyecto se organiza con la siguiente separación:
 - `CuentaAhorro(Cuenta)`: comportamiento específico de cuenta de ahorro
 - `Transaccion`: representa una operación del catálogo `tipo_transaccion`
 
-La capa ORM queda en `src/models.py` y refleja exactamente el esquema de la base de datos.
+La capa ORM queda en `src/modelos/models.py` y refleja exactamente el esquema de la base de datos.
 
 ## Pendientes de integración
 

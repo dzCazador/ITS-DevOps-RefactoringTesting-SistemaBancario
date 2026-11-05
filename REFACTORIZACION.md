@@ -38,9 +38,9 @@ su verificación mediante la suite de tests automatizados.
 ## 2. Patrón Singleton — Conexión única a la BD
 
 **Archivo nuevo:** `src/database.py`
-**Archivos modificados:** `src/dao.py`, `src/app_context.py` (nuevo), `src/login.py`,
-`src/home_personal.py`, `src/home_crear_cliente.py`, `src/home_operaciones.py`,
-`src/home_historial.py`, `src/vista_gestion_clientes.py`
+**Archivos modificados:** `src/dao.py`, `src/app_context.py` (nuevo), `src/vistas/login.py`,
+`src/vistas/home_personal.py`, `src/vistas/home_crear_cliente.py`, `src/vistas/home_operaciones.py`,
+`src/vistas/home_historial.py`, `src/vistas/vista_gestion_clientes.py`
 
 ### Problema
 
@@ -48,13 +48,13 @@ Cada módulo de vista creaba su propia instancia del DAO, y cada DAO creaba su p
 `Engine` de SQLAlchemy (pool de conexiones) apuntando al mismo archivo SQLite:
 
 ```python
-# ANTES — src/login.py
+# ANTES — src/login.py (ahora src/vistas/login.py)
 _dao = DAO("sistema_bancario.db")          # engine #1
 
-# ANTES — src/home_personal.py
+# ANTES — src/home_personal.py (ahora src/vistas/home_personal.py)
 _dao = DAOPersonal("sistema_bancario.db")  # engine #2
 
-# ANTES — src/home_operaciones.py
+# ANTES — src/home_operaciones.py (ahora src/vistas/home_operaciones.py)
 _dao = DAOCliente("sistema_bancario.db")   # engine #3
 # ... y así hasta 6 engines distintos para la MISMA base de datos
 ```
@@ -93,7 +93,7 @@ dao = DAO(DB_PATH)
 dao_personal = DAOPersonal(DB_PATH)
 dao_cliente = DAOCliente(DB_PATH)
 
-# DESPUÉS — src/login.py
+# DESPUÉS — src/vistas/login.py
 from src.app_context import dao as _dao
 ```
 
@@ -111,22 +111,22 @@ en un solo lugar, y `DatabaseConnection.reset()` permite aislar los tests.
 
 ## 3. Patrón Factory Method — Creación de cuentas
 
-**Archivo nuevo:** `src/cuenta_factory.py`
-**Archivos modificados:** `src/autenticacion.py`, `src/cuenta_ahorro.py`
+**Archivo nuevo:** `src/modelos/cuenta_factory.py`
+**Archivos modificados:** `src/autenticacion.py`, `src/modelos/cuenta_ahorro.py`
 
 ### Problema
 
 La elección de la subclase de `Cuenta` estaba dispersa y duplicada en las vistas:
 
 ```python
-# ANTES — src/home_cliente.py
+# ANTES — src/home_cliente.py (ahora src/vistas/home_cliente.py)
 def _nombre_tipo(cuenta):
     if isinstance(cuenta, CuentaAhorro):
         return "Caja de Ahorro"
     if isinstance(cuenta, Cuenta):
         return "Corriente"
 
-# ANTES — src/home_operaciones.py
+# ANTES — src/home_operaciones.py (ahora src/vistas/home_operaciones.py)
 if etiqueta == "Caja de ahorro" and "ahorro" in nombre_tipo.lower():
     return c
 
@@ -144,7 +144,7 @@ Agregar un nuevo tipo de cuenta obligaba a tocar **todos** esos puntos
 la fábrica decide cuál invocar:
 
 ```python
-# DESPUÉS — src/cuenta_factory.py
+# DESPUÉS — src/modelos/cuenta_factory.py
 class CuentaFactory:
     _creadores = {}
 
@@ -185,7 +185,7 @@ return [
 
 ## 4. Patrón Builder — Construcción de Personas
 
-**Archivo nuevo:** `src/persona_builder.py`
+**Archivo nuevo:** `src/modelos/persona_builder.py`
 **Archivos modificados:** `tests/test_autenticacion.py`
 
 ### Problema
@@ -235,9 +235,9 @@ empleado = (
 
 ## 5. Principio DRY — Utilidades de UI compartidas
 
-**Archivo nuevo:** `src/ui_utils.py`
-**Archivos modificados:** `src/home_cliente.py`, `src/home_operaciones.py`,
-`src/home_historial.py`, `src/login.py`
+**Archivo nuevo:** `src/vistas/ui_utils.py`
+**Archivos modificados:** `src/vistas/home_cliente.py`, `src/vistas/home_operaciones.py`,
+`src/vistas/home_historial.py`, `src/vistas/login.py`
 
 ### Problema
 
@@ -256,7 +256,7 @@ page.snack_bar = ft.SnackBar(ft.Text(texto), bgcolor="red" if es_error else "gre
 Un único módulo con la fuente de verdad:
 
 ```python
-# DESPUÉS — src/ui_utils.py
+# DESPUÉS — src/vistas/ui_utils.py
 class Colores:
     FONDO = "#0a0a0f"
     VIOLETA = "#8b2fc9"
@@ -272,8 +272,8 @@ def mostrar_notificacion(page, texto, es_error=False): ...
 Las vistas ahora importan:
 
 ```python
-# DESPUÉS — src/home_cliente.py
-from src.ui_utils import Colores, formatear_monto as _formatear_monto
+# DESPUÉS — src/vistas/home_cliente.py
+from src.vistas.ui_utils import Colores, formatear_monto as _formatear_monto
 ```
 
 ---
@@ -329,9 +329,9 @@ $ pytest tests/ -q
 |---------|--------------------|
 | `src/database.py` | **Singleton** — conexión única a la BD |
 | `src/app_context.py` | **DRY** — punto de acceso compartido a los DAO |
-| `src/cuenta_factory.py` | **Factory Method** — creación de cuentas por tipo |
-| `src/persona_builder.py` | **Builder** — construcción fluida de Persona/Cliente/Empleado |
-| `src/ui_utils.py` | **DRY** — formateo de montos, notificaciones, paleta |
+| `src/modelos/cuenta_factory.py` | **Factory Method** — creación de cuentas por tipo |
+| `src/modelos/persona_builder.py` | **Builder** — construcción fluida de Persona/Cliente/Empleado |
+| `src/vistas/ui_utils.py` | **DRY** — formateo de montos, notificaciones, paleta |
 | `tests/test_patrones.py` | Tests de los 3 patrones (15 casos) |
 
 ### Archivos modificados (9)
@@ -340,12 +340,12 @@ $ pytest tests/ -q
 |---------|--------|
 | `src/dao.py` | Usa `DatabaseConnection` (Singleton) en vez de crear su engine |
 | `src/autenticacion.py` | Usa `CuentaFactory.crear_desde_fila()` |
-| `src/cuenta_ahorro.py` | Acepta `**kwargs` para integrarse con la factory |
-| `src/login.py` | DAO compartido + `mostrar_notificacion` de `ui_utils` |
-| `src/home_cliente.py` | `formatear_monto` y `Colores` de `ui_utils` |
-| `src/home_operaciones.py` | DAO compartido + utilidades de `ui_utils` |
-| `src/home_historial.py` | DAO compartido + `formatear_monto_con_signo` |
-| `src/home_personal.py` / `src/home_crear_cliente.py` / `src/vista_gestion_clientes.py` | DAO compartido desde `app_context` |
+| `src/modelos/cuenta_ahorro.py` | Acepta `**kwargs` para integrarse con la factory |
+| `src/vistas/login.py` | DAO compartido + `mostrar_notificacion` de `ui_utils` |
+| `src/vistas/home_cliente.py` | `formatear_monto` y `Colores` de `ui_utils` |
+| `src/vistas/home_operaciones.py` | DAO compartido + utilidades de `ui_utils` |
+| `src/vistas/home_historial.py` | DAO compartido + `formatear_monto_con_signo` |
+| `src/vistas/home_personal.py` / `src/vistas/home_crear_cliente.py` / `src/vistas/vista_gestion_clientes.py` | DAO compartido desde `app_context` |
 | `tests/test_autenticacion.py` | Usa `EmpleadoBuilder` |
 
 ---
@@ -353,7 +353,7 @@ $ pytest tests/ -q
 ## 9. Separación MVC — Modelo, Vista y Controlador
 
 **Archivos nuevos:** `src/controladores/` (4 controladores + `__init__.py`), `tests/test_controladores.py`
-**Archivos modificados:** `src/app_context.py` y las vistas `src/login.py`, `src/home_*.py`, `src/vista_gestion_clientes.py`
+**Archivos modificados:** `src/app_context.py` y las vistas `src/vistas/login.py`, `src/home_*.py`, `src/vistas/vista_gestion_clientes.py`
 
 ### Estado antes
 
@@ -364,8 +364,8 @@ $ pytest tests/ -q
 
 | Capa | Responsabilidad | Archivos |
 |------|-----------------|----------|
-| **Modelo** | Dominio y persistencia. No conoce la interfaz. | `src/cliente.py`, `cuenta.py`, `cuenta_ahorro.py`, `persona.py`, `empleado.py`, `transaccion.py`, `dao*.py`, `models.py` |
-| **Vista** | Renderiza Flet y delega cada acción al controlador. | `src/login.py`, `home_*.py`, `vista_gestion_clientes.py`, `navegacion.py`, `ui_utils.py` |
+| **Modelo** | Dominio y persistencia. No conoce la interfaz. | `src/modelos/cliente.py`, `cuenta.py`, `cuenta_ahorro.py`, `persona.py`, `empleado.py`, `transaccion.py`, `dao*.py`, `models.py` |
+| **Vista** | Renderiza Flet y delega cada acción al controlador. | `src/vistas/login.py`, `home_*.py`, `vista_gestion_clientes.py`, `navegacion.py`, `ui_utils.py` |
 | **Controlador** | Casos de uso: valida la entrada y coordina modelo y persistencia. | `src/controladores/*.py` |
 
 **Inyección de dependencias:** los controladores reciben el DAO por constructor (`OperacionController(dao)`). `src/app_context.py` los instancia una sola vez con el DAO compartido del Singleton.
@@ -392,7 +392,7 @@ Vista (home_operaciones.py)
 | `src/controladores/historial_controller.py` | Nuevo | Historial de movimientos |
 | `tests/test_controladores.py` | Nuevo | 23 tests de los controladores |
 | `src/app_context.py` | Modificado | Instancia los controladores con el DAO compartido |
-| `src/login.py`, `src/home_cliente.py`, `src/home_personal.py`, `src/home_crear_cliente.py`, `src/home_operaciones.py`, `src/home_historial.py`, `src/vista_gestion_clientes.py` | Modificados | Sólo renderizan y delegan; sin imports de `dao`/`models` ni `connect()` |
+| `src/vistas/login.py`, `src/vistas/home_cliente.py`, `src/vistas/home_personal.py`, `src/vistas/home_crear_cliente.py`, `src/vistas/home_operaciones.py`, `src/vistas/home_historial.py`, `src/vistas/vista_gestion_clientes.py` | Modificados | Sólo renderizan y delegan; sin imports de `dao`/`models` ni `connect()` |
 
 ### Verificación
 
