@@ -228,7 +228,7 @@ from src.vistas.ui_utils import Colores, formatear_monto, mostrar_notificacion
 ┌──────────────────▼─────────────────────────────────────────────────┐
 │                    Contenedor Docker (Linux)                       │
 │                                                                    │
-│  [flet-web] + [FastAPI / Uvicorn] (Headless Web Server)            │
+│  [flet-web] (Headless Web Server)                                 │
 │       │                                                            │
 │       ▼                                                            │
 │  [main.py] -> [src/vistas/login.py] -> [SQLAlchemy ORM]            │

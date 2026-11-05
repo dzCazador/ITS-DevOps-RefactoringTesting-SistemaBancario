@@ -563,7 +563,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
     add_card(s9, Inches(0.8), Inches(1.6), Inches(5.5), Inches(5.4), "El Desafío Técnico de Flet en Docker", [
         ("Comportamiento Nativo", "Flet está diseñado para abrir clientes GUI de Flutter Desktop en el sistema operativo anfitrión."),
         ("Problema en Docker", "En contenedores Linux headless (sin pantalla ni X11), la ejecución de escritorio falla de inmediato."),
-        ("Solución Implementada", "Convertir la aplicación en un servidor web ASGI completo basado en FastAPI y Uvicorn."),
+        ("Solución Implementada", "Activar el modo servidor web de Flet (flet-web) con FLET_FORCE_WEB_SERVER=true en 0.0.0.0:8550."),
         ("Dependencia Clave", "Se agregó flet-web==0.28.3 en requirements.txt para incluir los assets compilados de Flutter Web."),
         ("Variables de Red", "FLET_FORCE_WEB_SERVER=true y FLET_SERVER_IP=0.0.0.0 permiten escuchar en todas las interfaces del contenedor.")
     ], badge_text="DESAFÍO Y SOLUCIÓN", border_color=C_AMBER, badge_color=C_AMBER)
@@ -667,7 +667,7 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
     add_card(s13, Inches(0.8), Inches(1.6), Inches(5.8), Inches(5.4), "Paso a Paso en la Terminal", [
         ("1. Levantar la App", "docker compose up --build -d (Compilación de capas e inicio en segundo plano)."),
         ("2. Verificar Salud", "docker compose ps (Mostrar estado 'healthy' y puerto 8550 expuesto)."),
-        ("3. Ver Logs del Servidor", "docker compose logs banco-app (Mostrar arranque limpio de Flet y Uvicorn)."),
+        ("3. Ver Logs del Servidor", "docker compose logs banco-app (Mostrar arranque limpio del servidor web de Flet)."),
         ("4. Navegación Web", "Abrir http://localhost:8550 en el navegador. Login Personal: DNI 22233344 | Clave: admin."),
         ("5. Probar Persistencia", "docker compose down y docker compose up -d. Los saldos y transacciones persisten intactos."),
         ("6. Correr Tests en Contenedor", "docker compose run --rm banco-app pytest -v (59 tests pasando en verde dentro de Docker).")
