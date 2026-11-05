@@ -6,7 +6,13 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.app_context import dao_cliente as _dao
+from src.app_context import operacion_controller as _operaciones
+from src.controladores.operacion_controller import (
+    CuentaNoEncontradaError,
+    FormatoMontoError,
+    MontoNoPositivoError,
+    MontoVacioError,
+)
 from src.navegacion import crear_bottom_nav, nombre_cuenta_para_header
 from src.sesion import Sesion
 from src.ui_utils import formatear_monto as _formatear_monto
@@ -32,22 +38,6 @@ def render_home_operaciones(page: ft.Page):
     usuario = Sesion.actual()
     cuentas = usuario.get("cuentas", []) if usuario else []
     nombre_usuario = usuario.get("nombre", "Cliente") if usuario else "Cliente"
-
-    # Nombres de tipo desde la BD para mapear el toggle a la cuenta real.
-    with _dao.connect() as _s:
-        from sqlalchemy import select
-        from src.models import TipoCuentaModel
-        _tipos = {r.id_tipo_cuenta: r.nombre for r in
-                  _s.scalars(select(TipoCuentaModel)).all()}
-
-    def _cuenta_para_toggle(etiqueta):
-        for c in cuentas:
-            nombre_tipo = _tipos.get(c.get_id_tipo_cuenta(), "")
-            if etiqueta == "Caja de ahorro" and "ahorro" in nombre_tipo.lower():
-                return c
-            if etiqueta == "Corriente" and "corriente" in nombre_tipo.lower():
-                return c
-        return None
 
     cuenta_seleccionada = ["Corriente"]
     tipo_operacion = ["Depositar"]
@@ -173,41 +163,36 @@ def render_home_operaciones(page: ft.Page):
     )
 
     def _ejecutar_operacion(e):
-        if not txt_monto.value:
+        try:
+            resultado = _operaciones.ejecutar_operacion(
+                cuentas,
+                cuenta_seleccionada[0],
+                tipo_operacion[0],
+                txt_monto.value,
+            )
+        except MontoVacioError:
             _mostrar_notificacion(page, "Ingrese un monto a operar", es_error=True)
             return
-
-        try:
-            monto_str = txt_monto.value.replace(".", "").replace(",", ".")
-            monto = float(monto_str)
-            if monto <= 0:
-                _mostrar_notificacion("Ingrese un monto mayor a 0", es_error=True)
-                return
-
-            op = tipo_operacion[0]
-            cuenta = _cuenta_para_toggle(cuenta_seleccionada[0])
-            if cuenta is None:
-                _mostrar_notificacion(
-                    page, f"No tenés cuenta {cuenta_seleccionada[0]}.", es_error=True)
-                return
-
-            # Persiste en BD (saldo + transacción) vía DAO temporal.
-            if op == "Depositar":
-                _dao.depositar(cuenta, monto)
-            else:
-                _dao.retirar(cuenta, monto)
-
-            txt_monto.value = ""
-            _mostrar_notificacion(
-                page,
-                f"{op} de {_formatear_monto(monto)} en cuenta "
-                f"{cuenta.get_nro_cuenta()} realizado con éxito.")
-            page.update()
-
-        except ValueError:
+        except FormatoMontoError:
             _mostrar_notificacion(page, "Formato de monto inválido", es_error=True)
+            return
+        except MontoNoPositivoError:
+            _mostrar_notificacion(page, "Ingrese un monto mayor a 0", es_error=True)
+            return
+        except CuentaNoEncontradaError as ex:
+            _mostrar_notificacion(
+                page, f"No tenés cuenta {ex.etiqueta}.", es_error=True)
+            return
         except Exception as ex:
             _mostrar_notificacion(page, f"Error: {ex}", es_error=True)
+            return
+
+        txt_monto.value = ""
+        _mostrar_notificacion(
+            page,
+            f"{resultado.tipo} de {_formatear_monto(resultado.monto)} en cuenta "
+            f"{resultado.nro_cuenta} realizado con éxito.")
+        page.update()
 
     btn_ejecutar = ft.Container(
         padding=ft.Padding(0, 12, 0, 12),

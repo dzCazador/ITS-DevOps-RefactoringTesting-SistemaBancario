@@ -5,8 +5,7 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.cuenta import Cuenta
-from src.cuenta_ahorro import CuentaAhorro
+from src.app_context import cliente_controller as _clientes
 from src.navegacion import ir_a, crear_bottom_nav
 from src.sesion import Sesion
 from src.ui_utils import Colores, formatear_monto as _formatear_monto
@@ -18,14 +17,6 @@ NEON_CLARO = Colores.VIOLETA_CLARO
 BORDE_TARJETA = Colores.BORDE_TARJETA
 GRIS = Colores.TEXTO_SUAVE
 GRIS_OSCURO = Colores.TEXTO_MUTED
-
-
-def _nombre_tipo(cuenta):
-    if isinstance(cuenta, CuentaAhorro):
-        return "Caja de Ahorro"
-    if isinstance(cuenta, Cuenta):
-        return "Corriente"
-    return "Cuenta"
 
 
 def render_home_cliente(page: ft.Page):
@@ -140,7 +131,7 @@ def render_home_cliente(page: ft.Page):
                                 spacing=2,
                                 controls=[
                                     ft.Text(
-                                        f"{_nombre_tipo(cuenta)} · tipo {indice + 1}",
+                                        f"{_clientes.nombre_tipo_cuenta(cuenta)} · tipo {indice + 1}",
                                         size=13,
                                         weight=ft.FontWeight.BOLD,
                                         color=GRIS,

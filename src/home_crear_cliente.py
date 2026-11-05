@@ -5,8 +5,7 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.app_context import dao_personal as _dao
-from src.cliente import Cliente
+from src.app_context import cliente_controller as _clientes
 from src.navegacion import ir_a
 from src.sesion import Sesion
 
@@ -30,22 +29,6 @@ LINEA = "#49305E"
 
 VERDE = "#22C55E"
 ROJO = "#EF4444"
-
-
-def _resolver_tipo(nombre_tipo):
-    try:
-        return _dao.guardar_tipo_cuenta(nombre_tipo)
-    except ValueError:
-        from sqlalchemy import select
-        from src.models import TipoCuentaModel
-
-        with _dao.connect() as s:
-            row = s.scalar(
-                select(TipoCuentaModel).where(
-                    TipoCuentaModel.nombre == nombre_tipo
-                )
-            )
-            return row.id_tipo_cuenta if row is not None else None
 
 
 def render_gestion_cliente(page: ft.Page, dni=None):
@@ -73,7 +56,7 @@ def render_gestion_cliente(page: ft.Page, dni=None):
         return
 
     es_nuevo = dni is None
-    datos = None if es_nuevo else _dao.obtener_cliente_por_dni(dni)
+    datos = None if es_nuevo else _clientes.obtener_cliente_por_dni(dni)
 
     if not es_nuevo and datos is None:
         _aviso(page, "No existe un cliente con ese DNI.", ok=False)
@@ -251,13 +234,11 @@ def render_gestion_cliente(page: ft.Page, dni=None):
             clave = (txt_clave.value or "").strip() or None
 
             if es_nuevo:
-                id_cliente = _dao.guardar_cliente(
-                    Cliente(
-                        nombre,
-                        apellido,
-                        nuevo_dni,
-                        password=clave,
-                    )
+                id_cliente = _clientes.crear_cliente(
+                    nombre,
+                    apellido,
+                    nuevo_dni,
+                    clave,
                 )
                 _aviso(
                     page,
@@ -265,18 +246,12 @@ def render_gestion_cliente(page: ft.Page, dni=None):
                 )
 
             else:
-                Cliente(
+                ok = _clientes.actualizar_cliente(
+                    datos[3],
                     nombre,
                     apellido,
                     nuevo_dni,
-                )
-
-                ok = _dao.actualizar_persona_por_dni(
-                    datos[3],
-                    nombre.title(),
-                    apellido.title(),
-                    nuevo_dni,
-                    password=clave,
+                    clave,
                 )
 
                 if not ok:
@@ -294,7 +269,7 @@ def render_gestion_cliente(page: ft.Page, dni=None):
 
             txt_clave.value = ""
             es_nuevo = False
-            datos = _dao.obtener_cliente_por_dni(nuevo_dni)
+            datos = _clientes.obtener_cliente_por_dni(nuevo_dni)
             id_cliente = datos[0]
 
             titulo_cliente.value = "Editar Cliente"
@@ -374,7 +349,7 @@ def render_gestion_cliente(page: ft.Page, dni=None):
             )
             return
 
-        cuentas = _dao.obtener_cuentas_por_cliente(
+        cuentas = _clientes.listar_cuentas(
             id_cliente
         )
 
@@ -443,55 +418,12 @@ def render_gestion_cliente(page: ft.Page, dni=None):
                 return
 
             nro = (txt_nro.value or "").strip()
-            nombre_tipo = dd_tipo.value
 
-            if not nro or not nombre_tipo:
-                _aviso(
-                    page,
-                    "Completá número y tipo.",
-                    ok=False,
-                )
-                return
-
-            try:
-                saldo = float(
-                    (txt_saldo.value or "0").strip()
-                    or 0
-                )
-
-            except ValueError:
-                _aviso(
-                    page,
-                    "El saldo debe ser un número.",
-                    ok=False,
-                )
-                return
-
-            if saldo < 0:
-                _aviso(
-                    page,
-                    "El saldo no puede ser negativo.",
-                    ok=False,
-                )
-                return
-
-            id_tipo = _resolver_tipo(
-                nombre_tipo
-            )
-
-            if id_tipo is None:
-                _aviso(
-                    page,
-                    "No se pudo resolver el tipo de cuenta.",
-                    ok=False,
-                )
-                return
-
-            id_cta = _dao.guardar_cuenta(
-                nro,
+            id_cta = _clientes.agregar_cuenta(
                 id_cliente,
-                id_tipo,
-                saldo=saldo,
+                txt_nro.value,
+                dd_tipo.value,
+                txt_saldo.value,
             )
 
             _aviso(

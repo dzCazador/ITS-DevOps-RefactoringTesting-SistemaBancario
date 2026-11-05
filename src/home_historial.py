@@ -4,7 +4,7 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.app_context import dao_cliente as _dao
+from src.app_context import historial_controller as _historial
 from src.navegacion import crear_bottom_nav, ir_a, nombre_cuenta_para_header
 from src.sesion import Sesion
 from src.ui_utils import formatear_monto_con_signo as _formatear_monto_mov
@@ -38,29 +38,7 @@ def render_home_historial(page: ft.Page):
     cuentas = usuario.get("cuentas", [])
 
     # Transacciones reales de la BD, adaptadas al formato de esta vista.
-    with _dao.connect() as _s:
-        from sqlalchemy import select
-        from src.models import TipoCuentaModel
-        _tipos = {r.id_tipo_cuenta: r.nombre for r in
-                  _s.scalars(select(TipoCuentaModel)).all()}
-
-    def _etiqueta_cuenta(cuenta):
-        nombre_tipo = _tipos.get(cuenta.get_id_tipo_cuenta(), "")
-        if "ahorro" in nombre_tipo.lower():
-            return "Caja de ahorro"
-        return nombre_tipo or "Cuenta"
-
-    _nombres = {c.get_id_cuenta(): _etiqueta_cuenta(c) for c in cuentas}
-    historial_lista = [
-        {
-            "fecha": fecha.strftime("%d/%m/%Y"),
-            "operacion": "Depositar" if tx.get_tipo() == "deposito"
-                         else ("Retiro" if tx.get_tipo() == "retiro" else tx.get_tipo()),
-            "cuenta": _nombres.get(tx.get_id_cuenta(), ""),
-            "monto": tx.get_monto() if tx.get_tipo() == "deposito" else -tx.get_monto(),
-        }
-        for fecha, _, tx in _dao.historial_cuentas(cuentas)
-    ]
+    historial_lista = _historial.movimientos(cuentas)
 
     filtro_activo = ["Todas"]
     col_filas = ft.Column(spacing=14)
@@ -72,10 +50,7 @@ def render_home_historial(page: ft.Page):
 
     def _actualizar_tabla():
         col_filas.controls.clear()
-        filtrados = [
-            m for m in historial_lista
-            if filtro_activo[0] == "Todas" or m.get("cuenta", "").lower() == filtro_activo[0].lower()
-        ]
+        filtrados = _historial.filtrar(historial_lista, filtro_activo[0])
 
         if not filtrados:
             col_filas.controls.append(

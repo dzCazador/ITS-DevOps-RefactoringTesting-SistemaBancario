@@ -5,7 +5,7 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.app_context import dao_personal as _dao
+from src.app_context import cliente_controller as _clientes
 from src.home_crear_cliente import render_gestion_cliente
 from src.navegacion import ir_a
 from src.sesion import Sesion
@@ -40,38 +40,21 @@ def _aviso(page, texto, ok=True):
 
 
 def _formatear_cuentas_badges(id_cliente):
-    """Obtiene y renderiza las cuentas del cliente como badges según el diseño."""
-    try:
-        cuentas = _dao.obtener_cuentas_por_cliente(id_cliente)
-    except Exception:
-        cuentas = []
+    """Renderiza las etiquetas de cuentas del cliente como badges."""
+    etiquetas = _clientes.etiquetas_cuentas(id_cliente)
 
-    if not cuentas:
+    if not etiquetas:
         return [ft.Text("Sin cuentas", size=11, color=COLOR_ENCABEZADO)]
 
-    badges = []
-    for c in cuentas:
-        nombre_clase = c.__class__.__name__.lower()
-        if "ahorro" in nombre_clase:
-            label = "Caja de ahorro"
-        elif "corriente" in nombre_clase:
-            label = "Corriente"
-        elif isinstance(c, dict):
-            label = "Caja de ahorro" if "ahorro" in str(c.get("tipo", "")).lower() else "Corriente"
-        elif isinstance(c, (list, tuple)) and len(c) > 1:
-            label = "Caja de ahorro" if "ahorro" in str(c[1]).lower() else "Corriente"
-        else:
-            label = "Corriente"
-
-        badges.append(
-            ft.Container(
-                padding=ft.Padding(10, 4, 10, 4),
-                border=ft.border.all(1, BORDE_NEON_BRIGHT),
-                border_radius=8,
-                content=ft.Text(label, size=11, color=COLOR_BLANCO),
-            )
+    return [
+        ft.Container(
+            padding=ft.Padding(10, 4, 10, 4),
+            border=ft.border.all(1, BORDE_NEON_BRIGHT),
+            border_radius=8,
+            content=ft.Text(label, size=11, color=COLOR_BLANCO),
         )
-    return badges
+        for label in etiquetas
+    ]
 
 
 def render_home_personal(page: ft.Page):
@@ -88,7 +71,7 @@ def render_home_personal(page: ft.Page):
         return
 
     nombre = Sesion.actual().get("nombre", "Personal")
-    clientes = _dao.obtener_todos_clientes()
+    clientes = _clientes.listar_clientes()
 
     def _nuevo(e):
         ir_a(page, render_gestion_cliente)

@@ -6,12 +6,13 @@ import flet as ft
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.app_context import dao as _dao
-from src.autenticacion import Autenticacion
+from src.app_context import auth_controller as _auth
+from src.controladores.auth_controller import (
+    CamposIncompletosError,
+    CredencialesInvalidasError,
+)
 from src.sesion import Sesion
 from src.ui_utils import mostrar_notificacion
-
-_autenticacion = Autenticacion(_dao)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_PATH = os.path.join(BASE_DIR, "img", "logo_clean.png")
@@ -62,15 +63,12 @@ def render_login(page: ft.Page):
     )
 
     def on_login_click(e):
-        dni = (dni_input.value or "").strip()
-        clave = (clave_input.value or "").strip()
-
-        if not dni or not clave:
+        try:
+            usuario = _auth.iniciar_sesion(dni_input.value, clave_input.value)
+        except CamposIncompletosError:
             mostrar_mensaje("Por favor ingresa tu DNI y Clave", es_error=True)
             return
-
-        usuario = _autenticacion.autenticar(dni, clave)
-        if usuario is None:
+        except CredencialesInvalidasError:
             mostrar_mensaje("DNI o clave incorrectos", es_error=True)
             return
 

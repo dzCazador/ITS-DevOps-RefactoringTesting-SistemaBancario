@@ -8,12 +8,7 @@ sys.path.insert(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
-from src.app_context import dao
-from src.gestion_clientes import (
-    alta_cliente,
-    alta_cuenta,
-    editar_cliente,
-)
+from src.app_context import cliente_controller as _clientes
 
 
 def main(page: ft.Page):
@@ -93,8 +88,7 @@ def main(page: ft.Page):
 
         try:
 
-            id_cliente = alta_cliente(
-                dao,
+            id_cliente = _clientes.alta_cliente(
                 txt_nombre.value,
                 txt_apellido.value,
                 txt_dni.value,
@@ -147,8 +141,7 @@ def main(page: ft.Page):
 
         try:
 
-            id_cuenta = alta_cuenta(
-                dao,
+            id_cuenta = _clientes.alta_cuenta(
                 dni=txt_dni_cuenta.value,
                 nro_cuenta=txt_numero_cuenta.value,
                 tipo_cuenta=tipo_cuenta.value,
@@ -191,8 +184,7 @@ def main(page: ft.Page):
 
         try:
 
-            editar_cliente(
-                dao,
+            _clientes.editar_cliente(
                 dni_actual=txt_dni_actual.value,
                 nuevo_nombre=txt_nuevo_nombre.value,
                 nuevo_apellido=txt_nuevo_apellido.value,
