@@ -6,6 +6,7 @@ from src.controladores.cliente_controller import nombres_tipo_cuenta
 from src.modelos.errores import CuentaNoEncontradaError
 
 __all__ = [
+    "CuentaDestino",
     "CuentaNoEncontradaError",
     "FormatoMontoError",
     "MontoNoPositivoError",
@@ -35,9 +36,26 @@ class ResultadoOperacion:
     saldo: float
 
 
+@dataclass(frozen=True)
+class CuentaDestino:
+    """An account offered as transfer destination, with its holder's name."""
+
+    nro_cuenta: str
+    tipo: str
+    nombre: str
+    apellido: str
+
+
 class OperacionController:
     def __init__(self, dao):
         self._dao = dao
+
+    def listar_cuentas_destino(self) -> list:
+        """Every account in the system, ordered by holder, for the destination picker."""
+        return [
+            CuentaDestino(nro_cuenta=nro, tipo=tipo, nombre=nombre, apellido=apellido)
+            for nro, tipo, nombre, apellido in self._dao.listar_cuentas_destino()
+        ]
 
     def cuenta_para_etiqueta(self, cuentas, etiqueta: str):
         """Return the account matching a UI toggle label, or None."""

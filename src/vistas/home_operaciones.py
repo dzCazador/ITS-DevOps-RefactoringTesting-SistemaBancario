@@ -162,7 +162,7 @@ def render_home_operaciones(page: ft.Page):
         btn_sel.bgcolor = NEON_BG_BTN
         btn_sel.border = None
         lbl_btn_ejecutar.value = tipo
-        txt_destino.visible = tipo == "Transferir"
+        dd_destino.visible = tipo == "Transferir"
         page.update()
 
     btn_op_depositar.on_click = lambda e: _seleccionar_operacion("Depositar", btn_op_depositar)
@@ -183,23 +183,29 @@ def render_home_operaciones(page: ft.Page):
         keyboard_type=ft.KeyboardType.NUMBER,
     )
 
-    # Campo de cuenta destino (solo para transferir)
-    txt_destino = ft.TextField(
-        value="",
-        label="Cuenta destino (nro)",
+    # Selector de cuenta destino (solo para transferir). Las opciones salen del
+    # controlador; el valor de cada opción es el número de cuenta.
+    opciones_destino = [
+        ft.dropdown.Option(
+            key=destino.nro_cuenta,
+            text=f"{destino.nombre} {destino.apellido} — {destino.tipo} — {destino.nro_cuenta}",
+        )
+        for destino in _operaciones.listar_cuentas_destino()
+    ]
+    dd_destino = ft.Dropdown(
+        label="Cuenta destino",
+        options=opciones_destino,
         visible=False,
         border_color=NEON_BORDER,
         focused_border_color=NEON_PURPLE,
         border_radius=12,
         text_size=16,
         color="#ffffff",
-        height=50,
-        keyboard_type=ft.KeyboardType.TEXT,
     )
 
     def _ejecutar_operacion(e):
         es_transferencia = tipo_operacion[0] == "Transferir"
-        destino = txt_destino.value.strip() if txt_destino.value else ""
+        destino = dd_destino.value.strip() if dd_destino.value else ""
         try:
             if es_transferencia:
                 resultado = _operaciones.transferir(
@@ -241,7 +247,7 @@ def render_home_operaciones(page: ft.Page):
 
         txt_monto.value = ""
         if es_transferencia:
-            txt_destino.value = ""
+            dd_destino.value = None
             _mostrar_notificacion(
                 page,
                 f"Transferencia de {_formatear_monto(resultado.monto)} desde cuenta "
@@ -283,7 +289,7 @@ def render_home_operaciones(page: ft.Page):
                 ft.Row(controls=[btn_cuenta_corriente, btn_cuenta_caja], spacing=10),
                 ft.Row(controls=[btn_op_depositar, btn_op_retirar, btn_op_transferir], spacing=10),
                 txt_monto,
-                txt_destino,
+                dd_destino,
                 btn_ejecutar,
             ],
         ),

@@ -20,7 +20,14 @@ from sqlalchemy import select
 from src.modelos.cuenta import SaldoInsuficienteError
 from src.dao import DAO
 from src.modelos.errores import CuentaNoEncontradaError, TransferenciaInvalidaError
-from src.modelos.models import CuentaModel, TipoTransaccionModel, TransaccionModel
+from src.modelos.models import (
+    ClienteModel,
+    CuentaModel,
+    PersonaModel,
+    TipoCuentaModel,
+    TipoTransaccionModel,
+    TransaccionModel,
+)
 from src.modelos.transaccion import Transaccion
 
 
@@ -85,6 +92,24 @@ class DAOCliente(DAO):
         session.add(
             TransaccionModel(id_cuenta=id_cuenta, id_tipo_transaccion=tipo.id_tipo_transaccion, monto=monto)
         )
+
+    def listar_cuentas_destino(self) -> list:
+        """[(nro_cuenta, tipo, nombre, apellido), ...] for every account, in one query."""
+        with self.connect() as session:
+            filas = session.execute(
+                select(
+                    CuentaModel.nro_cuenta,
+                    TipoCuentaModel.nombre,
+                    PersonaModel.nombre,
+                    PersonaModel.apellido,
+                )
+                .select_from(CuentaModel)
+                .join(ClienteModel, CuentaModel.id_cliente == ClienteModel.id_cliente)
+                .join(PersonaModel, ClienteModel.id_persona == PersonaModel.id_persona)
+                .join(TipoCuentaModel, CuentaModel.id_tipo_cuenta == TipoCuentaModel.id_tipo_cuenta)
+                .order_by(PersonaModel.apellido, PersonaModel.nombre, CuentaModel.nro_cuenta)
+            ).all()
+            return [tuple(fila) for fila in filas]
 
     def _nombres_tipos_transaccion(self) -> dict:
         with self.connect() as session:

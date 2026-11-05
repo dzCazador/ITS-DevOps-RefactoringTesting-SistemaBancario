@@ -480,3 +480,218 @@ def test_movimientos_mapea_transferencias_con_signo_correcto(dao_cliente):
 
     assert [(m["operacion"], m["monto"]) for m in enviada] == [("Transferencia enviada", -30.0)]
     assert [(m["operacion"], m["monto"]) for m in recibida] == [("Transferencia recibida", 30.0)]
+
+
+# ============================================================
+# N1/N2: feedback de operaciones (SnackBar abierto con page.open)
+# ============================================================
+
+class _PageStub:
+    """Minimal Flet page: records opened controls and ignores updates."""
+
+    def __init__(self):
+        self.abiertos = []
+        self.controls = []
+        self.title = ""
+        self.snack_bar = None
+
+    def open(self, control):
+        self.abiertos.append(control)
+
+    def add(self, *controles):
+        self.controls.extend(controles)
+
+    def update(self):
+        pass
+
+    def clean(self):
+        self.controls.clear()
+
+
+def _todos_los_controles(raiz):
+    if raiz is None:
+        return
+    yield raiz
+    for hijo in getattr(raiz, "controls", None) or []:
+        yield from _todos_los_controles(hijo)
+    yield from _todos_los_controles(getattr(raiz, "content", None))
+
+
+def test_mostrar_notificacion_error_abre_snackbar_rojo_con_page_open():
+    pytest.importorskip("flet")
+    import flet as ft
+
+    from src.vistas.ui_utils import Colores, mostrar_notificacion
+
+    page = _PageStub()
+
+    mostrar_notificacion(page, "Ingrese un monto a operar", es_error=True)
+
+    assert len(page.abiertos) == 1
+    snack = page.abiertos[0]
+    assert isinstance(snack, ft.SnackBar)
+    assert snack.content.value == "Ingrese un monto a operar"
+    assert snack.content.color == Colores.BLANCO
+    assert snack.bgcolor == Colores.ROJO
+
+
+def test_mostrar_notificacion_exito_abre_snackbar_verde_con_page_open():
+    pytest.importorskip("flet")
+
+    from src.vistas.ui_utils import Colores, mostrar_notificacion
+
+    page = _PageStub()
+
+    mostrar_notificacion(page, "Depositar de $ 50,00 realizado con éxito.")
+
+    assert len(page.abiertos) == 1
+    assert page.abiertos[0].content.value == "Depositar de $ 50,00 realizado con éxito."
+    assert page.abiertos[0].bgcolor == Colores.VERDE
+
+
+@pytest.fixture
+def abrir_operaciones(monkeypatch):
+    """Render home_operaciones with a temporary DAO and a session holding ``cuentas``."""
+    pytest.importorskip("flet")
+    import src.vistas.home_operaciones as vista
+
+    def abrir(dao, cuentas):
+        monkeypatch.setattr(vista, "_operaciones", OperacionController(dao))
+        page = _PageStub()
+        Sesion.iniciar({"dni": "40345678", "rol": "cliente", "nombre": "Maria", "cuentas": cuentas})
+        vista.render_home_operaciones(page)
+        return page
+
+    yield abrir
+    Sesion.cerrar()
+
+
+def _boton_ejecutar(page):
+    return next(
+        c for c in _todos_los_controles(page.controls[0])
+        if getattr(getattr(c, "on_click", None), "__name__", "") == "_ejecutar_operacion"
+    )
+
+
+def _boton_operacion(page, texto):
+    import flet as ft
+
+    return next(
+        c for c in _todos_los_controles(page.controls[0])
+        if isinstance(c, ft.Container) and isinstance(c.content, ft.Row)
+        and any(isinstance(h, ft.Text) and h.value == texto for h in c.content.controls)
+    )
+
+
+def _campo_monto(page):
+    import flet as ft
+
+    return next(c for c in _todos_los_controles(page.controls[0]) if isinstance(c, ft.TextField))
+
+
+def _dropdown_destino(page):
+    import flet as ft
+
+    return next(c for c in _todos_los_controles(page.controls[0]) if isinstance(c, ft.Dropdown))
+
+
+def test_operacion_con_monto_vacio_muestra_error_via_page_open(dao_cliente, abrir_operaciones):
+    from src.vistas.ui_utils import Colores
+
+    id_cliente = _sembrar_cliente(dao_cliente)
+    cuenta = _cuenta_de_dominio(dao_cliente, id_cliente, "40345678", "CC-9", "Corriente", 100.0)
+    page = abrir_operaciones(dao_cliente, [cuenta])
+    _campo_monto(page).value = ""
+
+    _boton_ejecutar(page).on_click(None)
+
+    assert len(page.abiertos) == 1
+    assert page.abiertos[0].content.value == "Ingrese un monto a operar"
+    assert page.abiertos[0].bgcolor == Colores.ROJO
+
+
+def test_deposito_valido_muestra_confirmacion_via_page_open(dao_cliente, abrir_operaciones):
+    from src.vistas.ui_utils import Colores
+
+    id_cliente = _sembrar_cliente(dao_cliente)
+    cuenta = _cuenta_de_dominio(dao_cliente, id_cliente, "40345678", "CC-9", "Corriente", 100.0)
+    page = abrir_operaciones(dao_cliente, [cuenta])
+    _boton_operacion(page, "Depositar").on_click(None)
+    _campo_monto(page).value = "50"
+
+    _boton_ejecutar(page).on_click(None)
+
+    assert len(page.abiertos) == 1
+    texto = page.abiertos[0].content.value
+    assert "realizado con éxito" in texto and "CC-9" in texto
+    assert page.abiertos[0].bgcolor == Colores.VERDE
+
+
+def test_transferencia_valida_muestra_confirmacion_via_page_open(dao_cliente, abrir_operaciones):
+    _dos_clientes_con_cuentas(dao_cliente)
+    origen = _cuenta_dominio_por_numero(dao_cliente, "CC-ORIGEN", "40345678")
+    page = abrir_operaciones(dao_cliente, [origen])
+    _boton_operacion(page, "Transferir").on_click(None)
+    _dropdown_destino(page).value = "CC-DESTINO"
+    _campo_monto(page).value = "30"
+
+    _boton_ejecutar(page).on_click(None)
+
+    assert len(page.abiertos) == 1
+    assert page.abiertos[0].content.value == (
+        "Transferencia de $ 30,00 desde cuenta CC-ORIGEN a cuenta CC-DESTINO realizada con éxito."
+    )
+    assert _saldo(dao_cliente, "CC-ORIGEN") == 70.0
+
+
+# ============================================================
+# D1/D2: listado de cuentas destino y selector Dropdown
+# ============================================================
+
+def test_listar_cuentas_destino_devuelve_titular_tipo_y_numero(dao_cliente):
+    _dos_clientes_con_cuentas(dao_cliente)
+
+    destinos = {d.nro_cuenta: d for d in OperacionController(dao_cliente).listar_cuentas_destino()}
+
+    assert set(destinos) == {"CC-ORIGEN", "CC-DESTINO"}
+    destino = destinos["CC-DESTINO"]
+    assert (destino.nombre, destino.apellido, destino.tipo) == ("Maria", "Fernandez", "Corriente")
+
+
+def test_listar_cuentas_destino_usa_una_sola_consulta(dao_cliente):
+    from sqlalchemy import event
+
+    _dos_clientes_con_cuentas(dao_cliente)
+    sentencias = []
+
+    def contar(conn, cursor, statement, parameters, context, executemany):
+        sentencias.append(statement)
+
+    event.listen(dao_cliente.engine, "before_cursor_execute", contar)
+    try:
+        dao_cliente.listar_cuentas_destino()
+    finally:
+        event.remove(dao_cliente.engine, "before_cursor_execute", contar)
+
+    assert len(sentencias) == 1
+
+
+def test_selector_destino_solo_visible_en_transferir_y_con_etiquetas(dao_cliente, abrir_operaciones):
+    import flet as ft
+
+    _dos_clientes_con_cuentas(dao_cliente)
+    origen = _cuenta_dominio_por_numero(dao_cliente, "CC-ORIGEN", "40345678")
+    page = abrir_operaciones(dao_cliente, [origen])
+
+    assert isinstance(_dropdown_destino(page), ft.Dropdown)
+    assert _dropdown_destino(page).visible is False
+    _boton_operacion(page, "Transferir").on_click(None)
+    assert _dropdown_destino(page).visible is True
+    _boton_operacion(page, "Depositar").on_click(None)
+    assert _dropdown_destino(page).visible is False
+
+    opciones = {op.key: op.text for op in _dropdown_destino(page).options}
+    assert opciones == {
+        "CC-ORIGEN": "Maria Fernandez — Corriente — CC-ORIGEN",
+        "CC-DESTINO": "Maria Fernandez — Corriente — CC-DESTINO",
+    }

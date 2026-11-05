@@ -46,10 +46,13 @@ def formatear_monto_con_signo(monto: float) -> str:
 
 
 def mostrar_notificacion(page: ft.Page, texto: str, es_error: bool = False) -> None:
-    """Muestra un SnackBar de éxito (verde) o error (rojo)."""
-    page.snack_bar = ft.SnackBar(
+    """Muestra un SnackBar de éxito (verde) o error (rojo).
+
+    Flet 0.28 exposes ``Page.open`` as the supported way to show a
+    SnackBar; assigning ``page.snack_bar`` alone does not display it.
+    """
+    snack = ft.SnackBar(
         ft.Text(texto, color=Colores.BLANCO),
         bgcolor=Colores.ROJO if es_error else Colores.VERDE,
     )
-    page.snack_bar.open = True
-    page.update()
+    page.open(snack)
