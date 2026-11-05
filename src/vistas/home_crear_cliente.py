@@ -312,8 +312,8 @@ def render_gestion_cliente(page: ft.Page, dni=None):
         label="Tipo de cuenta",
         expand=True,
         options=[
-            ft.dropdown.Option("Ahorro"),
-            ft.dropdown.Option("Corriente"),
+            ft.dropdown.Option("Ahorro", text_style=ft.TextStyle(color=BLANCO, size=14)),
+            ft.dropdown.Option("Corriente", text_style=ft.TextStyle(color=BLANCO, size=14)),
         ],
         label_style=ft.TextStyle(
             color=VIOLETA_CLARO,
