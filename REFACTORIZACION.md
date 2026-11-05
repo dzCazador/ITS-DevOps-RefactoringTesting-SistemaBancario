@@ -4,7 +4,7 @@ Documento técnico de la refactorización aplicada al proyecto: patrones de dise
 (**Singleton**, **Factory Method**, **Builder**), principios **SOLID**, **DRY** y
 su verificación mediante la suite de tests automatizados.
 
-> **Resultado:** 59 tests en verde (44 originales + 15 nuevos de patrones), 3 skipped.
+> **Resultado:** 82 tests en verde (44 originales + 15 de patrones + 23 de MVC), 3 skipped.
 > Comando de verificación: `pytest tests/ -q`
 
 ---
@@ -19,6 +19,7 @@ su verificación mediante la suite de tests automatizados.
 6. [Principios SOLID aplicados](#6-principios-solid-aplicados)
 7. [Tests de los patrones](#7-tests-de-los-patrones)
 8. [Resumen de archivos](#8-resumen-de-archivos)
+9. [Separación MVC — Modelo, Vista y Controlador](#9-separación-mvc--modelo-vista-y-controlador)
 
 ---
 
@@ -349,6 +350,64 @@ $ pytest tests/ -q
 
 ---
 
+## 9. Separación MVC — Modelo, Vista y Controlador
+
+**Archivos nuevos:** `src/controladores/` (4 controladores + `__init__.py`), `tests/test_controladores.py`
+**Archivos modificados:** `src/app_context.py` y las vistas `src/login.py`, `src/home_*.py`, `src/vista_gestion_clientes.py`
+
+### Estado antes
+
+- No existía capa controlador. Las vistas accedían al ORM directamente: `TipoCuentaModel` y `connect()` en `home_operaciones.py`, `home_historial.py` y `home_crear_cliente.py`.
+- `home_operaciones.py` llamaba `_mostrar_notificacion` sin el argumento `page`, lo que provocaba un error en tiempo de ejecución al notificar.
+
+### Diseño después
+
+| Capa | Responsabilidad | Archivos |
+|------|-----------------|----------|
+| **Modelo** | Dominio y persistencia. No conoce la interfaz. | `src/cliente.py`, `cuenta.py`, `cuenta_ahorro.py`, `persona.py`, `empleado.py`, `transaccion.py`, `dao*.py`, `models.py` |
+| **Vista** | Renderiza Flet y delega cada acción al controlador. | `src/login.py`, `home_*.py`, `vista_gestion_clientes.py`, `navegacion.py`, `ui_utils.py` |
+| **Controlador** | Casos de uso: valida la entrada y coordina modelo y persistencia. | `src/controladores/*.py` |
+
+**Inyección de dependencias:** los controladores reciben el DAO por constructor (`OperacionController(dao)`). `src/app_context.py` los instancia una sola vez con el DAO compartido del Singleton.
+
+### Flujo de ejemplo: depósito
+
+```
+Vista (home_operaciones.py)
+  → OperacionController.ejecutar_operacion(cuentas, etiqueta, tipo, texto_monto)
+      → parsear_monto() + cuenta_para_etiqueta()
+      → DAO.depositar(cuenta, monto)
+          → SQLite (Engine único vía DatabaseConnection)
+  ← ResultadoOperacion → la vista muestra la notificación
+```
+
+### Archivos del cambio
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `src/controladores/__init__.py` | Nuevo | Paquete de controladores |
+| `src/controladores/auth_controller.py` | Nuevo | Casos de uso de login |
+| `src/controladores/cliente_controller.py` | Nuevo | Gestión de clientes y nombres de tipo de cuenta |
+| `src/controladores/operacion_controller.py` | Nuevo | Depósito y retiro |
+| `src/controladores/historial_controller.py` | Nuevo | Historial de movimientos |
+| `tests/test_controladores.py` | Nuevo | 23 tests de los controladores |
+| `src/app_context.py` | Modificado | Instancia los controladores con el DAO compartido |
+| `src/login.py`, `src/home_cliente.py`, `src/home_personal.py`, `src/home_crear_cliente.py`, `src/home_operaciones.py`, `src/home_historial.py`, `src/vista_gestion_clientes.py` | Modificados | Sólo renderizan y delegan; sin imports de `dao`/`models` ni `connect()` |
+
+### Verificación
+
+```bash
+$ python -m pytest tests/ -q
+82 passed, 3 skipped in 9.23s
+```
+
+### Limitaciones
+
+- La UI no se probó en Flet real. Sólo se verificó el render de las 7 vistas (smoke test).
+- La etiqueta de tipo de cuenta en `home_personal` depende aún del texto del número de cuenta. Es un defecto previo, pendiente de corregir.
+
+---
+
 ## 🎤 Puntos clave para la presentación
 
 1. **Singleton:** de 6 engines duplicados a 1 solo compartido — verificable con
@@ -383,3 +442,4 @@ $ pytest tests/ -q
 | **CI/CD** | *Continuous Integration / Continuous Delivery* (Integración y Entrega Continua) | Práctica de automatizar tests y despliegues en cada cambio del repositorio (aquí: GitHub Actions). |
 | **AAA** | *Arrange-Act-Assert* (Organizar-Actuar-Afirmar) | Estructura estándar de un test: preparar el escenario, ejecutar la acción, verificar el resultado. |
 | **PR** | *Pull Request* | Solicitud de revisión e integración de cambios en un repositorio Git. |
+| **MVC** | *Model-View-Controller* (Modelo-Vista-Controlador) | Separa el dominio y la persistencia (Modelo), la interfaz (Vista) y los casos de uso que las coordinan (Controlador). |
