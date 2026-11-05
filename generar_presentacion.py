@@ -163,8 +163,8 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
         c_top = top + Inches(0.6)
         code_bg = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left + Inches(0.2), c_top, width - Inches(0.4), c_h)
         code_bg.fill.solid()
-        code_bg.fill.fore_color.rgb = RGBColor(15, 23, 42)
-        code_bg.line.color.rgb = RGBColor(51, 65, 85)
+        code_bg.fill.fore_color.rgb = RGBColor(241, 245, 249)  # #f1f5f9 light code panel
+        code_bg.line.color.rgb = RGBColor(203, 213, 225)       # #cbd5e1 soft border
         code_bg.line.width = Pt(1.0)
 
         tb_code = slide.shapes.add_textbox(left + Inches(0.26), c_top + Inches(0.06), width - Inches(0.52), c_h - Inches(0.12))
@@ -183,14 +183,14 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
             r_line.font.size = Pt(9.5)
             s_line = line.strip()
             if s_line.startswith("#"):
-                r_line.font.color.rgb = RGBColor(148, 163, 184)
+                r_line.font.color.rgb = RGBColor(100, 116, 139)  # #64748b comment
                 r_line.font.italic = True
             elif any(s_line.startswith(kw) for kw in ["class ", "def ", "return ", "from ", "import ", "if ", "for ", "in ", "yield ", "with "]):
-                r_line.font.color.rgb = RGBColor(56, 189, 248)
+                r_line.font.color.rgb = RGBColor(2, 132, 199)    # #0284c7 keyword
             elif any(c in line for c in ["True", "False", "None", "@classmethod", "DatabaseConnection", "CuentaFactory", "EmpleadoBuilder"]):
-                r_line.font.color.rgb = RGBColor(168, 85, 247)
+                r_line.font.color.rgb = RGBColor(124, 58, 237)   # #7c3aed special
             else:
-                r_line.font.color.rgb = RGBColor(241, 245, 249)
+                r_line.font.color.rgb = RGBColor(15, 23, 42)     # #0f172a body code
 
         b_top = c_top + c_h + Inches(0.1)
         b_h = height - (c_top - top + c_h + Inches(0.15))
