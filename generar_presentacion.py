@@ -301,6 +301,49 @@ def build_presentation(output_path="presentacion_sistema_bancario.pptx"):
     if os.path.exists("img/its.png"):
         s1.shapes.add_picture("img/its.png", Inches(9.6), Inches(5.0), width=Inches(2.2))
 
+    # SLIDES A-C: PRINCIPIOS DE DISEÑO (after cover)
+    h_top = Inches(1.6)
+    h_len = Inches(5.4)
+    card_w = Inches(3.64)
+
+    sp1 = prs.slides.add_slide(blank_layout)
+    apply_bg(sp1)
+    add_header(sp1, "Principios de Diseño: SOLID, KISS y DRY")
+
+    add_card(sp1, Inches(0.8), h_top, card_w, h_len, "SOLID", [
+        ("S - Responsabilidad única", "Cada clase o módulo tiene una sola razón para cambiar."),
+        ("O - Abierto/Cerrado", "Se extiende el comportamiento sin modificar el código existente."),
+        ("L - Sustitución de Liskov", "Una subclase puede reemplazar a su clase base sin romper el contrato."),
+        ("I - Segregación de interfaces", "Ningún cliente depende de métodos que no usa."),
+        ("D - Inversión de dependencias", "Las capas de alto nivel reciben abstracciones por inyección."),
+    ], badge_text="5 PRINCIPIOS", border_color=C_PURPLE, badge_color=C_PURPLE)
+
+    add_card(sp1, Inches(4.84), h_top, card_w, h_len, "KISS", [
+        ("Qué es", "Mantener la solución lo más simple posible: menos complejidad, más claridad."),
+        ("Builder", "Reemplaza el constructor de Empleado de 10 parámetros por pasos legibles."),
+        ("Funciones cortas", "Un controlador o utilidad de UI hace una sola tarea."),
+        ("Criterio", "Si una solución simple cumple el requisito, se descarta la abstracción extra."),
+    ], badge_text="SIMPLICIDAD", border_color=C_BLUE, badge_color=C_BLUE)
+
+    add_card(sp1, Inches(8.88), h_top, card_w, h_len, "DRY", [
+        ("Qué es", "Cada conocimiento vive en un único lugar del sistema."),
+        ("ui_utils", "Concentra formatear_monto, notificaciones y paleta de colores."),
+        ("DatabaseConnection", "Un único Engine por ruta de base de datos (antes había 6)."),
+        ("Pendiente", "La validación de login sigue duplicada en dao.py y persona.py."),
+    ], badge_text="NO REPETIR", border_color=C_EMERALD, badge_color=C_EMERALD)
+
+    sp2 = prs.slides.add_slide(blank_layout)
+    apply_bg(sp2)
+    add_header(sp2, "SOLID en el Proyecto: Dónde se Aplica")
+
+    add_card(sp2, Inches(0.8), h_top, Inches(11.73), h_len, "Estado por principio", [
+        ("S - Aplicado", "DatabaseConnection, los controladores y ui_utils separan persistencia, casos de uso y presentación."),
+        ("O - Aplicado", "CuentaFactory.registrar() agrega tipos de cuenta sin modificar la fábrica (test_registrar_nuevo_tipo_ocp)."),
+        ("L - Aplicado", "CuentaAhorro sustituye a Cuenta: la fábrica reconstruye las cuentas de ahorro como CuentaAhorro real."),
+        ("I - Parcial", "Builders y controladores exponen métodos específicos, pero los DAO siguen siendo clases amplias."),
+        ("D - Aplicado", "Los controladores y Autenticacion reciben el DAO por constructor; los tests usan bases temporales."),
+    ], badge_text="EVALUACIÓN", border_color=C_PURPLE, badge_color=C_PURPLE)
+
     # SLIDE 2: OBJETIVOS
     s2 = prs.slides.add_slide(blank_layout)
     apply_bg(s2)
